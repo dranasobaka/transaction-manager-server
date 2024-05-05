@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <groupId>io.transatron</groupId>
+        <artifactId>transaction-manager-parent</artifactId>
+        <version>0.0.1</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>transaction-manager-logic</artifactId>
+    <version>0.0.1</version>
+
+    <name>transaction-manager logic</name>
+    <description>Spring Framework TronTransactionManager logic project</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.transatron</groupId>
+            <artifactId>transaction-manager-persistence</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.transatron</groupId>
+            <artifactId>transaction-manager-web3</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.transatron</groupId>
+            <artifactId>transaction-manager-scheduler-logic</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+        </dependency>
+
+        <!-- region of mapstruct -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok-mapstruct-binding</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct-processor</artifactId>
+        </dependency>
+        <!-- endregion of mapstruct -->
+    </dependencies>
+
+</project>

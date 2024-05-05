@@ -1,0 +1,20 @@
+transaction-manager:
+  spring:
+    kafka:
+      consumer:
+        topic-name: demo_consumer_topic
+      producer:
+        topic-name: demo_producer_topic
+
+spring:
+  cloud.discovery.client.simple:
+    instances:
+      transaction-manager:
+        - uri: http://localhost:${server.port}
+  sleuth.sampler.probability: 1.0
+
+local:
+  server:
+    port: ${server.port}
+  management:
+    port: ${management.server.port}
