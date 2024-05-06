@@ -14,6 +14,6 @@ public interface TronHttpApiFeignClient {
             "Content-Type: application/json"
         }
     )
-    void broadcastHex(@RequestBody BroadcastHexRequest request);
+    String broadcastHex(@RequestBody BroadcastHexRequest request);
 
 }

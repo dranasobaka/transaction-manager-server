@@ -10,6 +10,7 @@ import io.transatron.transaction.manager.tronenergy.TronEnergyManager;
 import io.transatron.transaction.manager.web3.ResourceProviderService;
 import io.transatron.transaction.manager.web3.TronTransactionHandler;
 import io.transatron.transaction.manager.web3.api.TronHttpApiFeignClient;
+import io.transatron.transaction.manager.web3.configuration.properties.TronProperties;
 import org.apache.camel.RoutesBuilder;
 import org.apache.camel.builder.RouteBuilder;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -48,13 +49,15 @@ public class CamelConfiguration {
                                                                      ResourceProviderService resourceProviderService,
                                                                      TronHttpApiFeignClient tronHttpApiClient,
                                                                      TronTransactionHandler tronTransactionHandler,
-                                                                     WalletsProperties walletsProperties) {
+                                                                     WalletsProperties walletsProperties,
+                                                                     TronProperties tronProperties) {
         return new FulfillTransactionsProcessor(orderRepository,
                                                 resourceAddressRepository,
                                                 resourceProviderService,
                                                 tronHttpApiClient,
                                                 tronTransactionHandler,
-                                                walletsProperties);
+                                                walletsProperties,
+                                                tronProperties);
     }
 
     @Bean

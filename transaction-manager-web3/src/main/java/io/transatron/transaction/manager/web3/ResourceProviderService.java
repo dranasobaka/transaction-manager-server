@@ -1,5 +1,6 @@
 package io.transatron.transaction.manager.web3;
 
+import io.transatron.transaction.manager.web3.configuration.properties.TronProperties;
 import io.transatron.transaction.manager.web3.model.ResourceProvider;
 import io.transatron.transaction.manager.web3.model.TronAccountResources;
 import io.transatron.transaction.manager.web3.model.TronAccountResourcesProviders;
@@ -17,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static io.transatron.transaction.manager.web3.TronConstants.TRX_DECIMALS;
+import static io.transatron.transaction.manager.web3.utils.TronRequestUtils.delayIfRequested;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -25,9 +27,11 @@ public class ResourceProviderService {
 
     private final ApiWrapper apiWrapper;
 
+    private final TronProperties properties;
+
     public TronAccountResources getAccountResources(String address, String managerAddress) {
-        var providerTronAccount = apiWrapper.getAccount(address);
-        var providerTronAccountResources = apiWrapper.getAccountResource(address);
+        var providerTronAccount = delayIfRequested(() -> apiWrapper.getAccount(address), properties.requestDelayMillis());
+        var providerTronAccountResources = delayIfRequested(() -> apiWrapper.getAccountResource(address), properties.requestDelayMillis());
 
         return getResourcesStaked(providerTronAccount, providerTronAccountResources)
                     .address(address)
@@ -43,8 +47,8 @@ public class ResourceProviderService {
             var resourceAddress58 = provider.address();
             var resourceManagerAddress58 = provider.managerAddress();
 
-            var providerTronAccount = apiWrapper.getAccount(resourceAddress58);
-            var providerTronAccountResources = apiWrapper.getAccountResource(resourceAddress58);
+            var providerTronAccount = delayIfRequested(() -> apiWrapper.getAccount(resourceAddress58), properties.requestDelayMillis());
+            var providerTronAccountResources = delayIfRequested(() -> apiWrapper.getAccountResource(resourceAddress58), properties.requestDelayMillis());
 
             var verifiedPermissionID = TronUtils.isResourceAccountSetupValid(providerTronAccount, resourceManagerAddress58);
             if (verifiedPermissionID < 0) {

@@ -6,5 +6,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public record TronProperties(String grpc,
                              String grpcSolidity,
                              String privateKey,
-                             String apiKey) {
+                             String apiKey,
+                             Long requestDelayMillis) {
 }

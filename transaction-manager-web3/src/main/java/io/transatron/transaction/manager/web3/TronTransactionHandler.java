@@ -1,6 +1,7 @@
 package io.transatron.transaction.manager.web3;
 
 import com.google.protobuf.ByteString;
+import io.transatron.transaction.manager.web3.configuration.properties.TronProperties;
 import io.transatron.transaction.manager.web3.model.SendTransactionResult;
 import io.transatron.transaction.manager.web3.model.TransactionType;
 import io.transatron.transaction.manager.web3.utils.ThreadUtils;
@@ -20,6 +21,7 @@ import static io.transatron.transaction.manager.web3.model.TransactionType.BANDW
 import static io.transatron.transaction.manager.web3.model.TransactionType.ENERGY;
 import static io.transatron.transaction.manager.web3.model.TransactionType.UNBANDWIDTH;
 import static io.transatron.transaction.manager.web3.model.TransactionType.UNENERGY;
+import static io.transatron.transaction.manager.web3.utils.TronRequestUtils.delayIfRequested;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 
 @Slf4j
@@ -33,6 +35,8 @@ public class TronTransactionHandler {
     private static final int SUCCESS_CODE = 0;
 
     private final ApiWrapper apiWrapper;
+
+    private final TronProperties properties;
 
     public SendTransactionResult delegateEnergy(final String owner, final String receiver, final long amount, final int keyPermissionID, final String keyPK) {
         return sendTransaction(ENERGY, owner, receiver, amount, keyPermissionID, keyPK);
@@ -61,7 +65,7 @@ public class TronTransactionHandler {
             final var txWithPermission = setPermissionIDIfNecessary(txExtension, keyPermissionID);
 
             final var resourceAPIKey = new KeyPair(keyPK);
-            final var signedTxn = apiWrapper.signTransaction(txWithPermission, resourceAPIKey);
+            final var signedTxn = delayIfRequested(() -> apiWrapper.signTransaction(txWithPermission, resourceAPIKey), properties.requestDelayMillis());
 
             final var sendTransactionResult = broadcastTransaction(signedTxn);
 
@@ -133,7 +137,7 @@ public class TronTransactionHandler {
         final var txId = apiWrapper.calculateTransactionHash(txn);
         final var hash = ByteString.copyFrom(Hex.encode(txId)).toStringUtf8();
 
-        final var txReturn = apiWrapper.blockingStub.broadcastTransaction(txn);
+        final var txReturn = delayIfRequested(() -> apiWrapper.blockingStub.broadcastTransaction(txn), properties.requestDelayMillis());
 
         if (txReturn.getResult()) {
             return new SendTransactionResult(hash, SUCCESS_CODE, EMPTY);

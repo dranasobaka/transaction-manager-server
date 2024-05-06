@@ -14,6 +14,7 @@ import io.transatron.transaction.manager.web3.ResourceProviderService;
 import io.transatron.transaction.manager.web3.TronTransactionHandler;
 import io.transatron.transaction.manager.web3.api.TronHttpApiFeignClient;
 import io.transatron.transaction.manager.web3.api.dto.BroadcastHexRequest;
+import io.transatron.transaction.manager.web3.configuration.properties.TronProperties;
 import io.transatron.transaction.manager.web3.model.DelegatedResources;
 import io.transatron.transaction.manager.web3.model.ResourceProvider;
 import io.transatron.transaction.manager.web3.utils.TronAddressUtils;
@@ -25,6 +26,8 @@ import org.apache.camel.Processor;
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static io.transatron.transaction.manager.web3.utils.TronRequestUtils.delayIfRequested;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -41,6 +44,8 @@ public class FulfillTransactionsProcessor implements Processor {
     private final TronTransactionHandler tronTransactionHandler;
 
     private final WalletsProperties walletsProperties;
+
+    private final TronProperties tronProperties;
 
     @Override
     public void process(Exchange exchange) throws Exception {
@@ -181,7 +186,8 @@ public class FulfillTransactionsProcessor implements Processor {
     private boolean broadcastTransaction(TransactionEntity txEntity) {
         var request = new BroadcastHexRequest(txEntity.getRawTransaction());
         try {
-            tronHttpApiClient.broadcastHex(request);
+            var result = delayIfRequested(() -> tronHttpApiClient.broadcastHex(request), tronProperties.requestDelayMillis());
+            log.info("Broadcasted transaction result: {}", result);
             txEntity.setStatus(TransactionStatus.SUCCESSFUL);
             return true;
         } catch (Exception ex) {
