@@ -21,5 +21,6 @@ public class CreateTronEnergyOrderProcessor implements Processor {
 
         log.info("Creating TronEnergy order [wallet={}, energy amount={}]", payload.walletAddress(), payload.energy());
         tronEnergyManager.newEnergyOrder(payload.walletAddress(), payload.energy());
+        log.info("Created TronEnergy order [wallet={}, energy amount={}]", payload.walletAddress(), payload.energy());
     }
 }

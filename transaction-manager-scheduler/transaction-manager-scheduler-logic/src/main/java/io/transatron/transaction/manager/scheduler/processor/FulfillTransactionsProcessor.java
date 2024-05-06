@@ -58,16 +58,21 @@ public class FulfillTransactionsProcessor implements Processor {
         orderEntity.setStatus(OrderStatus.IN_PROGRESS);
         orderRepository.save(orderEntity);
 
+        log.info("Delegating {} energy and {} bandwidth to '{}' wallet",
+                 orderEntity.getOwnEnergy(), orderEntity.getOwnBandwidth(), TronAddressUtils.toBase58(orderEntity.getWalletAddress()));
         var delegatedResourcesProviders = delegateResources(orderEntity);
 
+        log.info("Broadcasting transactions for order '{}'", orderEntity.getId());
         var unsuccessfulTransactionsCount = orderEntity.getTransactions().stream()
                 .map(this::broadcastTransaction)
                 .filter(isSuccessful -> !isSuccessful)
                 .count();
 
         if (unsuccessfulTransactionsCount > 0) {
+            log.info("There were {} unsuccessful transactions", unsuccessfulTransactionsCount);
             orderEntity.setStatus(OrderStatus.PARTIALLY_FULFILLED);
         } else {
+            log.info("All transactions are broadcasted!");
             orderEntity.setStatus(OrderStatus.FULFILLED);
         }
 
@@ -149,23 +154,28 @@ public class FulfillTransactionsProcessor implements Processor {
     }
 
     private void reclaimResources(OrderEntity orderEntity, List<DelegatedResources> usedProviders) {
+        var userAddress = TronAddressUtils.toBase58(orderEntity.getWalletAddress());
+
+        log.info("Reclaiming resources from '{}'. Resources to reclaim: {}", userAddress, usedProviders);
+
         var resourceAddressesEntities = resourceAddressRepository.findAll();
 
         var managerAddressToPermissionID = resourceAddressesEntities.stream()
                 .collect(Collectors.toMap(entity -> TronAddressUtils.toBase58(entity.getManagerAddress()), ResourceAddressEntity::getPermissionId));
 
         usedProviders.forEach(provider -> {
-            var receiverAddress = TronAddressUtils.toBase58(orderEntity.getWalletAddress());
             var permissionId = managerAddressToPermissionID.get(provider.managerAddress());
             var privateKey = walletsProperties.getPrivateKeys().get(provider.managerAddress());
 
             if (provider.delegatedEnergy() > 0) {
-                tronTransactionHandler.undelegateEnergy(provider.address(), receiverAddress, provider.delegatedEnergy(), permissionId, privateKey);
+                tronTransactionHandler.undelegateEnergy(provider.address(), userAddress, provider.delegatedEnergy(), permissionId, privateKey);
             }
             if (provider.delegatedBandwidth() > 0) {
-                tronTransactionHandler.undelegateBandwidth(provider.address(), receiverAddress, provider.delegatedBandwidth(), permissionId, privateKey);
+                tronTransactionHandler.undelegateBandwidth(provider.address(), userAddress, provider.delegatedBandwidth(), permissionId, privateKey);
             }
         });
+
+        log.info("Resources are reclaimed from '{}'", userAddress);
     }
 
     private boolean broadcastTransaction(TransactionEntity txEntity) {
