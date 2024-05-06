@@ -1,6 +1,7 @@
 package io.transatron.transaction.manager.entity;
 
 import io.transatron.transaction.manager.domain.TransactionStatus;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Enumerated;

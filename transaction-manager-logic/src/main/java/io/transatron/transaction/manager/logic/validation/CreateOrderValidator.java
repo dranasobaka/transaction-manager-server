@@ -17,7 +17,6 @@ import static io.transatron.transaction.manager.domain.OrderStatus.IN_PROGRESS;
 import static io.transatron.transaction.manager.domain.OrderStatus.SCHEDULED;
 import static io.transatron.transaction.manager.domain.exception.ErrorsTable.VALIDATION_FAILED;
 import static org.apache.commons.lang3.ObjectUtils.isNotEmpty;
-import static org.apache.commons.lang3.ObjectUtils.max;
 
 @Component
 @RequiredArgsConstructor
@@ -29,12 +28,6 @@ public class CreateOrderValidator {
     private final Clock clock;
 
     private final OrderRepository repository;
-
-    public void validate(List<Transaction> userTxs, Timestamp fulfillFrom) {
-        assertFromAddress(userTxs);
-        assertFulfillingTime(fulfillFrom);
-        assertNoActiveOrdersCreated(userTxs.get(0).from());
-    }
 
     public void validate(List<Transaction> userTxs, Transaction paymentTx, Timestamp fulfillFrom) {
         assertFromAddress(userTxs, paymentTx);
@@ -50,17 +43,6 @@ public class CreateOrderValidator {
                                    .toList();
 
         if (fromAddresses.size() > 1 || !fromAddresses.get(0).equals(paymentTx.from())) {
-            throw new BadRequestException("All transactions must have single sender address", VALIDATION_FAILED);
-        }
-    }
-
-    private void assertFromAddress(List<Transaction> userTxs) {
-        var fromAddresses = userTxs.stream()
-                                   .map(Transaction::from)
-                                   .distinct()
-                                   .toList();
-
-        if (fromAddresses.size() > 1) {
             throw new BadRequestException("All transactions must have single sender address", VALIDATION_FAILED);
         }
     }

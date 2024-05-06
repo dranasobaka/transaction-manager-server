@@ -13,6 +13,8 @@ import org.tron.trident.proto.Chain;
 import org.tron.trident.proto.Contract;
 
 import java.lang.reflect.Method;
+import java.math.BigInteger;
+import java.util.Arrays;
 
 import static io.transatron.transaction.manager.domain.exception.ErrorsTable.CORRUPTED_PAYLOAD;
 
@@ -34,9 +36,11 @@ public class TronHexDecoder {
         var tx = parseTransactionObject(transactionBytes);
         var txHash = TronTransactionUtils.getTransactionHash(tx);
 
+        var txBuilder = Transaction.builder()
+                                   .id(txHash);
+
         if (tx.getRawData().getContractCount() <= 0) {
-            return Transaction.builder()
-                              .id(txHash);
+            return txBuilder;
         }
 
         var contract = tx.getRawData().getContract(0);
@@ -56,25 +60,26 @@ public class TronHexDecoder {
             var ownerAddress = (ByteString) getOwnerAddressMethod.invoke(contractObject);
             var txSenderAddress = TronAddressUtils.tronHexToBase58(ownerAddress);
 
-            var receiverMethodName = contractName.equals("TriggerSmartContract") ? "getContractAddress" : "getToAddress";
-            Method getToAddressMethod = contractClass.getMethod(receiverMethodName);
-            var toAddress = (ByteString) getToAddressMethod.invoke(contractObject);
-            var txReceiverAddress = TronAddressUtils.tronHexToBase58(toAddress);
+            if (contractName.equals("TriggerSmartContract")) {
+                parseSmartContractData(contract, txBuilder);
+            } else {
+                Method getToAddressMethod = contractClass.getMethod("getToAddress");
+                var toAddress = (ByteString) getToAddressMethod.invoke(contractObject);
+                var txReceiverAddress = TronAddressUtils.tronHexToBase58(toAddress);
 
-            var amountMethodName = contractName.equals("TriggerSmartContract") ? "getCallTokenValue" : "getAmount";
-            Method getAmountAddressMethod = contractClass.getMethod(amountMethodName);
-            var amount = (long) getAmountAddressMethod.invoke(contractObject);
+                Method getAmountAddressMethod = contractClass.getMethod("getAmount");
+                var amount = (long) getAmountAddressMethod.invoke(contractObject);
+
+                txBuilder.to(txReceiverAddress)
+                         .amount(amount);
+            }
 
             var estimatedBandwidth = estimateBandwidth(tx);
             var estimatedEnergy = tx.getRawData().getFeeLimit() / DEFAULT_ENERGY_FEE;
 
-            return Transaction.builder()
-                              .id(txHash)
-                              .from(txSenderAddress)
-                              .to(txReceiverAddress)
-                              .amount(amount)
-                              .estimatedBandwidth(estimatedBandwidth)
-                              .estimatedEnergy(estimatedEnergy);
+            return txBuilder.from(txSenderAddress)
+                            .estimatedBandwidth(estimatedBandwidth)
+                            .estimatedEnergy(estimatedEnergy);
         } catch (Exception ex) {
             log.error("Error parsing transaction", ex);
             throw new BadRequestException("Unable to decode transaction payload", CORRUPTED_PAYLOAD);
@@ -103,6 +108,23 @@ public class TronHexDecoder {
      */
     private long estimateBandwidth(Chain.Transaction txn) {
         return txn.toBuilder().clearRet().build().getSerializedSize() + 64;
+    }
+
+    private void parseSmartContractData(Chain.Transaction.ContractOrBuilder contract, Transaction.TransactionBuilder txBuilder) {
+        try {
+            var contractData = contract.getParameter().unpack(Contract.TriggerSmartContract.class);
+            var contractDataHex = contractData.getData().toByteArray();
+
+            var address = Arrays.copyOfRange(contractDataHex, 16, 36);
+            var amount = Arrays.copyOfRange(contractDataHex, 36, 68);
+            var transactionToAddress = TronAddressUtils.toBase58(address);
+            var txAmount = new BigInteger(amount).longValue();
+
+            txBuilder.to(transactionToAddress)
+                     .amount(txAmount);
+        } catch (Exception ex) {
+            log.error("Unable to parse data in TriggerSmartContract", ex);
+        }
     }
 
 }

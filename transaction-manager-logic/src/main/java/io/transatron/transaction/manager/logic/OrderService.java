@@ -29,7 +29,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.sql.Time;
 import java.sql.Timestamp;
+import java.time.Clock;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
@@ -67,6 +69,8 @@ public class OrderService {
 
     private final TRXDexManager trxDexManager;
 
+    private final Clock clock;
+
     public Optional<Order> findLastOrder(String walletAddress) {
         var address = TronAddressUtils.toHex(walletAddress);
 
@@ -97,7 +101,7 @@ public class OrderService {
         return new OrderEstimation(availableOwnEnergy, externalEnergy, bandwidth, priceUsdt);
     }
 
-    public void createOrder(List<String> userTransactions,
+    public UUID createOrder(List<String> userTransactions,
                             String paymentTransaction,
                             Long energy,
                             Long bandwidth,
@@ -125,27 +129,29 @@ public class OrderService {
         if (orderEstimation.externalEnergy() > 0) {
             createTronEnergySubscription(decodedPaymentTx.from(), orderEstimation.externalEnergy(), fulfillFrom);
         }
-        createOrder(decodedUserTxs, fulfillFrom, orderEstimation);
+        return createOrder(decodedUserTxs, fulfillFrom, orderEstimation);
     }
 
-    private void createOrder(List<Transaction> userTransactions, Timestamp fulfillFrom, OrderEstimation orderEstimation) {
+    private UUID createOrder(List<Transaction> userTransactions, Timestamp fulfillFrom, OrderEstimation orderEstimation) {
         var fulfillTo = Timestamp.from(fulfillFrom.toInstant().plus(Duration.ofHours(1)));
         var fromAddress = userTransactions.get(0).from();
-
-        var transactionEntities = userTransactions.stream()
-                .map(this::newTransaction)
-                .toList();
 
         var orderEntity = new OrderEntity();
         orderEntity.setId(UUID.randomUUID());
         orderEntity.setStatus(OrderStatus.SCHEDULED);
-        orderEntity.setTransactions(transactionEntities);
         orderEntity.setFulfillFrom(fulfillFrom);
         orderEntity.setFulfillTo(fulfillTo);
         orderEntity.setWalletAddress(TronAddressUtils.toHex(fromAddress));
         orderEntity.setOwnEnergy(orderEstimation.ownEnergy());
         orderEntity.setExternalEnergy(orderEstimation.externalEnergy());
         orderEntity.setOwnBandwidth(orderEstimation.ownBandwidth());
+        orderEntity.setCreatedAt(Timestamp.from(clock.instant()));
+
+        var transactionEntities = userTransactions.stream()
+                .map(tx -> newTransaction(tx, orderEntity))
+                .toList();
+
+        orderEntity.setTransactions(transactionEntities);
 
         repository.save(orderEntity);
 
@@ -158,6 +164,8 @@ public class OrderService {
                 .payload(payload)
                 .build();
         subscriptionService.save(subscription);
+
+        return orderEntity.getId();
     }
 
     private void createTronEnergySubscription(String targetWalletAddress, Long energy, Timestamp fulfillFrom) {
@@ -174,13 +182,15 @@ public class OrderService {
         subscriptionService.save(subscription);
     }
 
-    private TransactionEntity newTransaction(Transaction tx) {
+    private TransactionEntity newTransaction(Transaction tx, OrderEntity orderEntity) {
         var txEntity = new TransactionEntity();
         txEntity.setStatus(TransactionStatus.SCHEDULED);
         txEntity.setTxId(tx.id());
+        txEntity.setOrder(orderEntity);
         txEntity.setToAddress(TronAddressUtils.toHex(tx.to()));
         txEntity.setTxAmount(tx.amount());
         txEntity.setRawTransaction(tx.rawTransaction());
+        txEntity.setCreatedAt(Timestamp.from(clock.instant()));
 
         return txEntity;
     }

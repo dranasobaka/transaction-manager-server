@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS transactions
     order_id        UUID         NOT NULL,
     tx_id           VARCHAR(100) NOT NULL,
     to_address      BYTEA        NOT NULL,
+    tx_amount       BIGINT,
     raw_transaction TEXT         NOT NULL,
     status          VARCHAR(30),
     created_at      TIMESTAMP    NOT NULL DEFAULT now(),

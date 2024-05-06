@@ -50,7 +50,7 @@ public class OrderEntity {
     @Column(name = "created_at")
     private Timestamp createdAt;
 
-    @OneToMany(fetch = FetchType.EAGER)
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinColumn(name = "order_id", insertable = false, updatable = false)
     private List<TransactionEntity> transactions;
 

@@ -1,6 +1,7 @@
 package io.transatron.transaction.manager.controller;
 
 import io.transatron.transaction.manager.controller.dto.CreateOrderRequest;
+import io.transatron.transaction.manager.controller.dto.CreateOrderResponse;
 import io.transatron.transaction.manager.controller.dto.EstimateOrderRequest;
 import io.transatron.transaction.manager.controller.dto.EstimateOrderResponse;
 import io.transatron.transaction.manager.controller.dto.GetLastOrderResponse;
@@ -37,8 +38,13 @@ public class OrderController {
 
     @PostMapping(consumes = APPLICATION_JSON_VALUE)
     @ResponseStatus(CREATED)
-    public void createOrder(@RequestBody CreateOrderRequest request) {
-        service.createOrder(request.userTransactions(), request.paymentTransaction(), request.energy(), request.bandwidth(), request.fulfillFrom());
+    public CreateOrderResponse createOrder(@RequestBody CreateOrderRequest request) {
+        var orderId = service.createOrder(request.userTransactions(),
+                                          request.paymentTransaction(),
+                                          request.energy(),
+                                          request.bandwidth(),
+                                          request.fulfillFrom());
+        return new CreateOrderResponse(orderId.toString());
     }
 
     @PostMapping(path = "/estimate", consumes = APPLICATION_JSON_VALUE)
