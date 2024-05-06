@@ -3,7 +3,9 @@ package io.transatron.transaction.manager.controller;
 import io.transatron.transaction.manager.controller.dto.CreateOrderRequest;
 import io.transatron.transaction.manager.controller.dto.EstimateOrderRequest;
 import io.transatron.transaction.manager.controller.dto.EstimateOrderResponse;
+import io.transatron.transaction.manager.controller.dto.GetLastOrderResponse;
 import io.transatron.transaction.manager.controller.dto.OrderDto;
+import io.transatron.transaction.manager.logic.PaymentInfoService;
 import io.transatron.transaction.manager.logic.OrderService;
 import io.transatron.transaction.manager.mapper.OrderDtoMapper;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +33,8 @@ public class OrderController {
 
     private final OrderDtoMapper mapper;
 
+    private final PaymentInfoService paymentInfoService;
+
     @PostMapping(consumes = APPLICATION_JSON_VALUE)
     @ResponseStatus(CREATED)
     public void createOrder(@RequestBody CreateOrderRequest request) {
@@ -47,10 +51,25 @@ public class OrderController {
 
     @GetMapping
     @ResponseStatus(OK)
-    public OrderDto findLastOrderForWallet(@RequestParam("wallet_address") String walletAddress) {
-        var optionalOrder = service.findLastOrder(walletAddress);
-        return optionalOrder.map(mapper::toDto)
-                            .orElse(null);
+    public GetLastOrderResponse findLastOrderForWallet(@RequestParam("wallet_address") String walletAddress) {
+        var paymentInfo = paymentInfoService.getPaymentInfo();
+
+        var responseBuilder = GetLastOrderResponse.builder()
+                .depositAddress(paymentInfo.depositAddress())
+                .availableEnergy(paymentInfo.availableEnergy())
+                .availableBandwidth(paymentInfo.availableBandwidth());
+
+        service.findLastOrder(walletAddress)
+               .ifPresent(order -> {
+                   var dto = mapper.toDto(order);
+                   responseBuilder.id(dto.id())
+                                  .walletAddress(dto.walletAddress())
+                                  .status(order.status())
+                                  .fulfillFrom(dto.fulfillFrom())
+                                  .transactions(dto.transactions());
+               });
+
+        return responseBuilder.build();
     }
 
     @GetMapping("/{order_id}")

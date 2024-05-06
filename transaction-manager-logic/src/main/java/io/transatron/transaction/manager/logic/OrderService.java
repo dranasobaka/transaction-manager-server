@@ -23,6 +23,7 @@ import io.transatron.transaction.manager.scheduler.domain.payload.CreateTronEner
 import io.transatron.transaction.manager.scheduler.domain.payload.HandleOrderPayload;
 import io.transatron.transaction.manager.web3.TRXDexManager;
 import io.transatron.transaction.manager.web3.TronHexDecoder;
+import io.transatron.transaction.manager.web3.api.dto.BroadcastHexRequest;
 import io.transatron.transaction.manager.web3.utils.TronAddressUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -113,7 +114,8 @@ public class OrderService {
         var orderEstimation = estimateOrder(energy, bandwidth, fulfillFrom);
 
         try {
-            var responseBody = transaTronClient.broadcastHexTransaction(paymentTransaction);
+            var request = new BroadcastHexRequest(paymentTransaction);
+            var responseBody = transaTronClient.broadcastHexTransaction(request);
             log.info("Processed payment transaction. Result: {}", responseBody);
         } catch (FeignException ex) {
             log.warn("Payment transaction is failed with error. Aborting further processing.", ex);
