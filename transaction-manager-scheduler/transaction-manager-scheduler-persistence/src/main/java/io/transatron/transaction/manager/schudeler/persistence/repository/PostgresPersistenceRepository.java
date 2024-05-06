@@ -25,9 +25,9 @@ public class PostgresPersistenceRepository {
 
     private static final String UPSERT_SUBSCRIPTION_QUERY_TEMPLATE =
         """
-        INSERT INTO subscriptions(event_id, service_name, event_type, subscription_type, s_partition, trigger_ts_millis,
-                                  payload, schedule_cron, schedule_fixed_rate_millis, start_ts_millis, end_ts_millis, versioning,
-                                  partition_key)
+        INSERT INTO transaction_manager.subscriptions(event_id, service_name, event_type, subscription_type, s_partition, trigger_ts_millis,
+                                                      payload, schedule_cron, schedule_fixed_rate_millis, start_ts_millis, end_ts_millis, versioning,
+                                                      partition_key)
         VALUES (:event_id, :service_name, :event_type, :subscription_type, :s_partition, :trigger_ts_millis, :payload,
                 :schedule_cron, :schedule_fixed_rate_millis, :start_ts_millis, :end_ts_millis, 0, :partition_key)
         ON CONFLICT (event_id, event_type) DO UPDATE
@@ -51,7 +51,7 @@ public class PostgresPersistenceRepository {
         try {
             var subscription = jdbc.queryForObject("""
                                                    SELECT *
-                                                   FROM subscriptions
+                                                   FROM transaction_manager.subscriptions
                                                    WHERE event_id = :event_id 
                                                      AND event_type = :event_type 
                                                      AND handled = false
@@ -66,7 +66,7 @@ public class PostgresPersistenceRepository {
 
     public int remove(SubscriptionId id) {
         return jdbc.update("""
-                           UPDATE subscriptions
+                           UPDATE transaction_manager.subscriptions
                            SET handled = true
                            WHERE event_id = :event_id
                              AND event_type = :event_type
@@ -76,7 +76,7 @@ public class PostgresPersistenceRepository {
 
     public int remove(SubscriptionId id, int version) {
         return jdbc.update("""
-                           update subscriptions
+                           update transaction_manager.subscriptions
                            set handled = true
                            where event_id = :event_id
                            and event_type = :event_type
@@ -89,7 +89,7 @@ public class PostgresPersistenceRepository {
         var params = Map.of("millis", millis);
         var removed = jdbc.update("""
                                   DELETE 
-                                  FROM subscriptions
+                                  FROM transaction_manager.subscriptions
                                   WHERE trigger_ts_millis <= :millis
                                     AND handled = true
                                   """,
@@ -101,7 +101,7 @@ public class PostgresPersistenceRepository {
     public List<Subscription> findTriggeredSubscriptions(int partition, long millis) {
         return jdbc.query("""
                           SELECT * 
-                          FROM subscriptions 
+                          FROM transaction_manager.subscriptions 
                           WHERE s_partition = :s_partition 
                             AND handled = false
                             AND trigger_ts_millis <= :trigger_ts_millis_before 
@@ -115,7 +115,7 @@ public class PostgresPersistenceRepository {
     public List<Subscription> findAllById(List<SubscriptionId> subscriptionIds) {
         return jdbc.query("""
                           SELECT * 
-                          FROM subscriptions 
+                          FROM transaction_manager.subscriptions 
                           WHERE event_id IN (:ids) 
                             AND handled = false 
                           LIMIT 1000
@@ -142,7 +142,7 @@ public class PostgresPersistenceRepository {
         var params = Map.of("id", eventId,
                             "type", eventType);
         try {
-            return jdbc.queryForObject("SELECT * FROM subscriptions WHERE event_id = :id AND event_type = :type",
+            return jdbc.queryForObject("SELECT * FROM transaction_manager.subscriptions WHERE event_id = :id AND event_type = :type",
                                        params,
                                        subscriptionRowMapper);
         } catch (EmptyResultDataAccessException ex) {

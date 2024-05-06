@@ -4,6 +4,12 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
 
+    <!--functions-->
+    <include file="functions/numeric2bytea.sql" relativeToChangelogFile="true"/>
+    <include file="functions/base58_encode.sql" relativeToChangelogFile="true"/>
+    <include file="functions/base58_decode.sql" relativeToChangelogFile="true"/>
+    <include file="functions/tronbytes20.sql" relativeToChangelogFile="true"/>
+
     <!--initial-->
     <include file="changelog-initial.xml" relativeToChangelogFile="true"/>
 

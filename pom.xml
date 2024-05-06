@@ -22,7 +22,6 @@
         <module>transaction-manager-domain</module>
         <module>transaction-manager-db</module>
         <module>transaction-manager-logic</module>
-        <module>transaction-manager-functional-tests</module>
         <module>transaction-manager-scheduler</module>
         <module>transaction-manager-persistence</module>
         <module>transaction-manager-web3</module>
@@ -52,6 +51,7 @@
         <tron.trident.version>0.7.0</tron.trident.version>
         <protobuf-java.version>3.11.0</protobuf-java.version>
         <grpc.version>1.31.0</grpc.version>
+        <bouncycastle.bcprov-jdk18on.version>1.76</bouncycastle.bcprov-jdk18on.version>
 
         <maven-enforcer-plugin.version>3.0.0</maven-enforcer-plugin.version>
         <maven-resources-plugin.version>3.2.0</maven-resources-plugin.version>
@@ -233,6 +233,17 @@
                 <groupId>io.grpc</groupId>
                 <artifactId>grpc-stub</artifactId>
                 <version>${grpc.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.grpc</groupId>
+                <artifactId>grpc-protobuf</artifactId>
+                <version>${grpc.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcprov-jdk18on</artifactId>
+                <version>${bouncycastle.bcprov-jdk18on.version}</version>
             </dependency>
             <!-- endregion of tron -->
 

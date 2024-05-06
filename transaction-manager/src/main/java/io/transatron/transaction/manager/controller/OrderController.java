@@ -4,11 +4,12 @@ import io.transatron.transaction.manager.controller.dto.CreateOrderRequest;
 import io.transatron.transaction.manager.controller.dto.EstimateOrderResponse;
 import io.transatron.transaction.manager.controller.dto.OrderDto;
 import io.transatron.transaction.manager.logic.OrderService;
-import io.transatron.transaction.manager.mapper.OrderMapper;
+import io.transatron.transaction.manager.mapper.OrderDtoMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -27,17 +28,17 @@ public class OrderController {
 
     private final OrderService service;
 
-    private final OrderMapper mapper;
+    private final OrderDtoMapper mapper;
 
     @PostMapping(consumes = APPLICATION_JSON_VALUE)
     @ResponseStatus(CREATED)
-    public void createOrder(CreateOrderRequest request) {
+    public void createOrder(@RequestBody CreateOrderRequest request) {
         service.createOrder(request.userTransactions(), request.paymentTransaction(), request.fulfillFrom());
     }
 
     @PostMapping(path = "/estimate", consumes = APPLICATION_JSON_VALUE)
     @ResponseStatus(OK)
-    public EstimateOrderResponse estimateOrder(CreateOrderRequest request) {
+    public EstimateOrderResponse estimateOrder(@RequestBody CreateOrderRequest request) {
         var orderEstimation = service.estimateOrder(request.userTransactions(), request.fulfillFrom());
 
         return new EstimateOrderResponse(orderEstimation.regularPriceUsdt(), orderEstimation.transatronPriceUsdt());

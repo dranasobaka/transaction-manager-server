@@ -12,7 +12,7 @@ import io.transatron.transaction.manager.entity.TransactionEntity;
 import io.transatron.transaction.manager.logic.api.TransaTronFeignClient;
 import io.transatron.transaction.manager.logic.estimator.OrderResourcesEstimator;
 import io.transatron.transaction.manager.logic.mapper.OrderMapper;
-import io.transatron.transaction.manager.logic.model.OrderUsdtEstimation;
+import io.transatron.transaction.manager.logic.model.OrderEstimation;
 import io.transatron.transaction.manager.logic.validation.CreateOrderValidator;
 import io.transatron.transaction.manager.repository.OrderRepository;
 import io.transatron.transaction.manager.scheduler.SubscriptionService;
@@ -36,9 +36,11 @@ import java.util.UUID;
 
 import static io.transatron.transaction.manager.domain.exception.ErrorsTable.PAYMENT_FAILED;
 import static io.transatron.transaction.manager.domain.exception.ErrorsTable.RESOURCE_NOT_FOUND;
+import static io.transatron.transaction.manager.domain.exception.ErrorsTable.VALIDATION_FAILED;
 import static io.transatron.transaction.manager.scheduler.domain.EventTypes.CREATE_TRON_ENERGY_ORDER;
 import static io.transatron.transaction.manager.scheduler.domain.EventTypes.FULFILL_ORDER;
 import static io.transatron.transaction.manager.web3.TronConstants.TRX_DECIMALS;
+import static org.apache.commons.lang3.ObjectUtils.isEmpty;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -46,7 +48,7 @@ import static io.transatron.transaction.manager.web3.TronConstants.TRX_DECIMALS;
 public class OrderService {
 
     private static final double OWN_ENERGY_PRICE_RATE_SUN = 50;
-    private static final double OWN_BANDWIDTH_PRICE_RATE_SUN = 50;
+    private static final double OWN_BANDWIDTH_PRICE_RATE_SUN = 500;
     private static final double EXTERNAL_ENERGY_PRICE_RATE_SUN = 70;
 
     private final OrderRepository repository;
@@ -78,7 +80,9 @@ public class OrderService {
                          .orElseThrow(() -> new ResourceNotFoundException("Unable to find requested resource", RESOURCE_NOT_FOUND));
     }
 
-    public OrderUsdtEstimation estimateOrder(List<String> userTransactions, Timestamp fulfillFrom) {
+    public OrderEstimation estimateOrder(List<String> userTransactions, Timestamp fulfillFrom) {
+        assertTransactionsExist(userTransactions);
+
         var decodedUserTxs = userTransactions.stream()
                                              .map(txDecoder::decodeTransaction)
                                              .toList();
@@ -95,7 +99,9 @@ public class OrderService {
                                                  .orElse(0L);
 
         var availableOwnEnergy = resourcesEstimator.estimateEnergy(fulfillFrom);
-        var externalEnergy = (accumulatedEnergy - availableOwnEnergy) > 0 ? accumulatedEnergy - availableOwnEnergy : 0;
+
+        var sharedOwnEnergy = availableOwnEnergy > accumulatedEnergy ? accumulatedEnergy : availableOwnEnergy;
+        var externalEnergy = (accumulatedEnergy - sharedOwnEnergy) > 0 ? accumulatedEnergy - sharedOwnEnergy : 0;
 
         var regularPrice = EXTERNAL_ENERGY_PRICE_RATE_SUN * externalEnergy;
         var transatronPrice = (OWN_ENERGY_PRICE_RATE_SUN * availableOwnEnergy) + (OWN_BANDWIDTH_PRICE_RATE_SUN * accumulatedBandwidth);
@@ -106,10 +112,12 @@ public class OrderService {
         var regularPriceUsdt = trxDexManager.getTokenToTrxOutputPrice(Double.valueOf(regularPriceTrx).longValue());
         var transatronPriceUsdt = trxDexManager.getTokenToTrxOutputPrice(Double.valueOf(transatronPriceTrx).longValue());
 
-        return new OrderUsdtEstimation(availableOwnEnergy, externalEnergy, accumulatedBandwidth, regularPriceUsdt, transatronPriceUsdt);
+        return new OrderEstimation(availableOwnEnergy, externalEnergy, accumulatedBandwidth, regularPriceUsdt, transatronPriceUsdt);
     }
 
     public void createOrder(List<String> userTransactions, String paymentTransaction, Timestamp fulfillFrom) {
+        assertTransactionsExist(userTransactions, paymentTransaction);
+
         var decodedPaymentTx = txDecoder.decodeTransaction(paymentTransaction);
         var decodedUserTxs = userTransactions.stream()
                                              .map(txDecoder::decodeTransaction)
@@ -133,7 +141,7 @@ public class OrderService {
         createOrder(decodedUserTxs, fulfillFrom, orderEstimation);
     }
 
-    private void createOrder(List<Transaction> userTransactions, Timestamp fulfillFrom, OrderUsdtEstimation orderEstimation) {
+    private void createOrder(List<Transaction> userTransactions, Timestamp fulfillFrom, OrderEstimation orderEstimation) {
         var fulfillTo = Timestamp.from(fulfillFrom.toInstant().plus(Duration.ofHours(1)));
         var fromAddress = userTransactions.get(0).from();
 
@@ -188,6 +196,19 @@ public class OrderService {
         txEntity.setRawTransaction(tx.rawTransaction());
 
         return txEntity;
+    }
+
+    private void assertTransactionsExist(List<String> userTransactions, String paymentTransaction) {
+        assertTransactionsExist(userTransactions);
+        if (isEmpty(paymentTransaction)) {
+            throw new BadRequestException("Payment transaction must not be empty", VALIDATION_FAILED);
+        }
+    }
+
+    private void assertTransactionsExist(List<String> userTransactions) {
+        if (isEmpty(userTransactions)) {
+            throw new BadRequestException("Transactions list must not be empty", VALIDATION_FAILED);
+        }
     }
 
 }

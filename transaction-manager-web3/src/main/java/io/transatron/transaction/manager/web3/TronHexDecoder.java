@@ -25,35 +25,14 @@ public class TronHexDecoder {
 
     private static final long DEFAULT_ENERGY_FEE = 420;
 
-    private final ObjectMapper objectMapper;
-
-    public TronHexDecoder() {
-        this.objectMapper = new ObjectMapper();
-    }
-
     public Transaction decodeTransaction(String rawTransaction) {
-        var rootNode = readTreeOrThrowException(rawTransaction);
-
-        var tronTxBuilder = transformHex(rootNode);
+        var tronTxBuilder = transformHex(rawTransaction);
 
         return tronTxBuilder.rawTransaction(rawTransaction)
                             .build();
     }
 
-    private JsonNode readTreeOrThrowException(String rawTransaction) {
-        try {
-            return objectMapper.readTree(rawTransaction);
-        } catch (JsonProcessingException ex) {
-            throw new BadRequestException("Unable to decode transaction payload", CORRUPTED_PAYLOAD);
-        }
-    }
-
-    private Transaction.TransactionBuilder transformHex(JsonNode rootNode) {
-        if (!rootNode.hasNonNull("transaction")) {
-            throw new BadRequestException("Unable to decode transaction payload", CORRUPTED_PAYLOAD);
-        }
-
-        var transactionHex = rootNode.get("transaction").asText();
+    private Transaction.TransactionBuilder transformHex(String transactionHex) {
         var transactionBytes = decodeHex(transactionHex);
         var tx = parseTransactionObject(transactionBytes);
         var txHash = TronTransactionUtils.getTransactionHash(tx);

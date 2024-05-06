@@ -10,4 +10,7 @@
     <include file="tables/transactions_table.sql" relativeToChangelogFile="true"/>
     <include file="tables/resource_addresses.sql" relativeToChangelogFile="true"/>
 
+    <!-- data -->
+    <include file="data/initialize_resource_providers.sql" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>

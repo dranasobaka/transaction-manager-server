@@ -18,7 +18,7 @@ import static java.util.Objects.nonNull;
 public class JdbcPartitionLockRepository {
 
     private static final String INSERT_LOCK_QUERY_TEMPLATE = """
-        INSERT INTO locks(s_partition, locked_by_hostname, locked_until_ts)
+        INSERT INTO transaction_manager.locks(s_partition, locked_by_hostname, locked_until_ts)
         VALUES (:partition, :hostname, :lockuntil)
         ON CONFLICT (s_partition) DO UPDATE 
         SET locked_by_hostname = CASE WHEN locks.locked_until_ts < :now THEN EXCLUDED.locked_by_hostname ELSE locks.locked_by_hostname END,
@@ -26,11 +26,11 @@ public class JdbcPartitionLockRepository {
         """;
     private static final String DELETE_LOCK_QUERY_TEMPLATE = """
         DELETE
-        FROM locks 
+        FROM transaction_manager.locks 
         WHERE s_partition = :partition 
           AND locked_by_hostname = :hostname
         """;
-    private static final String GET_LOCK_BY_PARTITION_QUERY = "SELECT * FROM locks WHERE s_partition = :partition";
+    private static final String GET_LOCK_BY_PARTITION_QUERY = "SELECT * FROM transaction_manager.locks WHERE s_partition = :partition";
 
     private final NamedParameterJdbcOperations jdbc;
 
