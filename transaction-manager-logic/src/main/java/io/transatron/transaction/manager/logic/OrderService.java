@@ -98,7 +98,7 @@ public class OrderService {
 
         var priceUsdt = marketPriceUsdt + transatronPriceUsdt;
 
-        return new OrderEstimation(availableOwnEnergy, externalEnergy, bandwidth, priceUsdt);
+        return new OrderEstimation(sharedOwnEnergy, externalEnergy, bandwidth, priceUsdt);
     }
 
     public UUID createOrder(List<String> userTransactions,
