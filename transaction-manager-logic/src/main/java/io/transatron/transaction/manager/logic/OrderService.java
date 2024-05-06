@@ -39,7 +39,6 @@ import static io.transatron.transaction.manager.domain.exception.ErrorsTable.RES
 import static io.transatron.transaction.manager.domain.exception.ErrorsTable.VALIDATION_FAILED;
 import static io.transatron.transaction.manager.scheduler.domain.EventTypes.CREATE_TRON_ENERGY_ORDER;
 import static io.transatron.transaction.manager.scheduler.domain.EventTypes.FULFILL_ORDER;
-import static io.transatron.transaction.manager.web3.TronConstants.TRX_DECIMALS;
 import static org.apache.commons.lang3.ObjectUtils.isEmpty;
 
 @Slf4j
@@ -49,7 +48,7 @@ public class OrderService {
 
     private static final double OWN_ENERGY_PRICE_RATE_SUN = 50;
     private static final double OWN_BANDWIDTH_PRICE_RATE_SUN = 500;
-    private static final double EXTERNAL_ENERGY_PRICE_RATE_SUN = 70;
+    private static final double EXTERNAL_ENERGY_PRICE_RATE_SUN = 85;
 
     private final OrderRepository repository;
 
@@ -80,42 +79,28 @@ public class OrderService {
                          .orElseThrow(() -> new ResourceNotFoundException("Unable to find requested resource", RESOURCE_NOT_FOUND));
     }
 
-    public OrderEstimation estimateOrder(List<String> userTransactions, Timestamp fulfillFrom) {
-        assertTransactionsExist(userTransactions);
-
-        var decodedUserTxs = userTransactions.stream()
-                                             .map(txDecoder::decodeTransaction)
-                                             .toList();
-
-        createOrderValidator.validate(decodedUserTxs, fulfillFrom);
-
-        var accumulatedEnergy = decodedUserTxs.stream()
-                                              .map(Transaction::estimatedEnergy)
-                                              .reduce(Long::sum)
-                                              .orElse(0L);
-        var accumulatedBandwidth = decodedUserTxs.stream()
-                                                 .map(Transaction::estimatedBandwidth)
-                                                 .reduce(Long::sum)
-                                                 .orElse(0L);
-
+    public OrderEstimation estimateOrder(Long energy, Long bandwidth, Timestamp fulfillFrom) {
         var availableOwnEnergy = resourcesEstimator.estimateEnergy(fulfillFrom);
 
-        var sharedOwnEnergy = availableOwnEnergy > accumulatedEnergy ? accumulatedEnergy : availableOwnEnergy;
-        var externalEnergy = (accumulatedEnergy - sharedOwnEnergy) > 0 ? accumulatedEnergy - sharedOwnEnergy : 0;
+        var sharedOwnEnergy = availableOwnEnergy > energy ? energy : availableOwnEnergy;
+        var externalEnergy = (energy - sharedOwnEnergy) > 0 ? energy - sharedOwnEnergy : 0;
 
-        var regularPrice = EXTERNAL_ENERGY_PRICE_RATE_SUN * externalEnergy;
-        var transatronPrice = (OWN_ENERGY_PRICE_RATE_SUN * availableOwnEnergy) + (OWN_BANDWIDTH_PRICE_RATE_SUN * accumulatedBandwidth);
+        var marketPrice = EXTERNAL_ENERGY_PRICE_RATE_SUN * externalEnergy;
+        var transatronPrice = (OWN_ENERGY_PRICE_RATE_SUN * sharedOwnEnergy) + (OWN_BANDWIDTH_PRICE_RATE_SUN * bandwidth);
 
-        var regularPriceTrx = regularPrice / TRX_DECIMALS;
-        var transatronPriceTrx = transatronPrice / TRX_DECIMALS;
+        var marketPriceUsdt = externalEnergy > 0 ? trxDexManager.getTokenToTrxOutputPrice(Double.valueOf(marketPrice).longValue()) : 0;
+        var transatronPriceUsdt = trxDexManager.getTokenToTrxOutputPrice(Double.valueOf(transatronPrice).longValue());
 
-        var regularPriceUsdt = trxDexManager.getTokenToTrxOutputPrice(Double.valueOf(regularPriceTrx).longValue());
-        var transatronPriceUsdt = trxDexManager.getTokenToTrxOutputPrice(Double.valueOf(transatronPriceTrx).longValue());
+        var priceUsdt = marketPriceUsdt + transatronPriceUsdt;
 
-        return new OrderEstimation(availableOwnEnergy, externalEnergy, accumulatedBandwidth, regularPriceUsdt, transatronPriceUsdt);
+        return new OrderEstimation(availableOwnEnergy, externalEnergy, bandwidth, priceUsdt);
     }
 
-    public void createOrder(List<String> userTransactions, String paymentTransaction, Timestamp fulfillFrom) {
+    public void createOrder(List<String> userTransactions,
+                            String paymentTransaction,
+                            Long energy,
+                            Long bandwidth,
+                            Timestamp fulfillFrom) {
         assertTransactionsExist(userTransactions, paymentTransaction);
 
         var decodedPaymentTx = txDecoder.decodeTransaction(paymentTransaction);
@@ -125,7 +110,7 @@ public class OrderService {
 
         createOrderValidator.validate(decodedUserTxs, decodedPaymentTx, fulfillFrom);
 
-        var orderEstimation = estimateOrder(userTransactions, fulfillFrom);
+        var orderEstimation = estimateOrder(energy, bandwidth, fulfillFrom);
 
         try {
             var responseBody = transaTronClient.broadcastHexTransaction(paymentTransaction);

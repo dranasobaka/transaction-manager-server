@@ -1,8 +1,5 @@
 package io.transatron.transaction.manager.web3;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.protobuf.ByteString;
 import io.transatron.transaction.manager.domain.Transaction;
 import io.transatron.transaction.manager.domain.exception.BadRequestException;
@@ -59,11 +56,13 @@ public class TronHexDecoder {
             var ownerAddress = (ByteString) getOwnerAddressMethod.invoke(contractObject);
             var txSenderAddress = TronAddressUtils.tronHexToBase58(ownerAddress);
 
-            Method getToAddressMethod = contractClass.getMethod("getToAddress");
+            var receiverMethodName = contractName.equals("TriggerSmartContract") ? "getContractAddress" : "getToAddress";
+            Method getToAddressMethod = contractClass.getMethod(receiverMethodName);
             var toAddress = (ByteString) getToAddressMethod.invoke(contractObject);
             var txReceiverAddress = TronAddressUtils.tronHexToBase58(toAddress);
 
-            Method getAmountAddressMethod = contractClass.getMethod("getAmount");
+            var amountMethodName = contractName.equals("TriggerSmartContract") ? "getCallTokenValue" : "getAmount";
+            Method getAmountAddressMethod = contractClass.getMethod(amountMethodName);
             var amount = (long) getAmountAddressMethod.invoke(contractObject);
 
             var estimatedBandwidth = estimateBandwidth(tx);

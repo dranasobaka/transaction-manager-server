@@ -12,6 +12,7 @@ import org.tron.trident.core.ApiWrapper;
 import org.tron.trident.proto.Common;
 import org.tron.trident.proto.Response;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -68,8 +69,8 @@ public class ResourceProviderService {
     public TronAccountResources.TronAccountResourcesBuilder getResourcesStaked(Response.Account resourceAccountData,
                                                                                Response.AccountResourceMessage resourceAccResources) {
         var trxBalance = resourceAccountData.getBalance();
-        var delegatedEnergy = resourceAccountData.getAccountResource().getDelegatedFrozenV2BalanceForEnergy();
-        var delegatedBandwidth = resourceAccountData.getDelegatedFrozenV2BalanceForBandwidth();
+        var delegatedEnergyTRX = resourceAccountData.getAccountResource().getDelegatedFrozenV2BalanceForEnergy();
+        var delegatedBandwidthTRX = resourceAccountData.getDelegatedFrozenV2BalanceForBandwidth();
 
         var keepMinimumBandwidth = 300;   // single delegate/undelegate
 
@@ -79,7 +80,7 @@ public class ResourceProviderService {
         log.info("---------------------------");
         log.info("ResourceAddress: {}", TronAddressUtils.tronHexToBase58(resourceAccountData.getAddress()));
         log.info("TRX: {}, Delegated Energy TRX: {}, Delegated Bandwidth TRX: {}",
-                 trxBalance * 1.0 / TRX_DECIMALS, delegatedEnergy * 1.0 / TRX_DECIMALS, delegatedBandwidth * 1.0 / TRX_DECIMALS);
+                 trxBalance * 1.0 / TRX_DECIMALS, delegatedEnergyTRX * 1.0 / TRX_DECIMALS, delegatedBandwidthTRX * 1.0 / TRX_DECIMALS);
         log.info("Energy: {} / {}", resourceAccResources.getEnergyLimit(), resourceAccResources.getEnergyUsed());
         log.info("Bandwidth: {} / {}", resourceAccResources.getNetLimit(), resourceAccResources.getNetUsed());
         log.info("Free Net: {} / {}", resourceAccResources.getFreeNetLimit(), resourceAccResources.getFreeNetUsed());
@@ -99,8 +100,26 @@ public class ResourceProviderService {
             }
         }
 
-        var availableEnergyTRX = totalStakenEnergyTRX - delegatedEnergy - energyUsedTRX;
-        var availableBandwidthTRX = totalStakenBandwidthTRX - delegatedBandwidth - netUsedTRX;
+        var availableEnergyTRX = totalStakenEnergyTRX - delegatedEnergyTRX - energyUsedTRX;
+        var availableBandwidthTRX = totalStakenBandwidthTRX - delegatedBandwidthTRX - netUsedTRX;
+
+        var availableBandwidth = BigInteger.valueOf(availableBandwidthTRX).multiply(BigInteger.valueOf(43200000000L))
+                                                                          .divide(BigInteger.valueOf(TRX_DECIMALS))
+                                                                          .divide(BigInteger.valueOf(resourceAccResources.getTotalNetWeight()))
+                                                                          .longValue();
+        var availableEnergy = BigInteger.valueOf(availableEnergyTRX).multiply(BigInteger.valueOf(90000000000L))
+                                                                    .divide(BigInteger.valueOf(TRX_DECIMALS))
+                                                                    .divide(BigInteger.valueOf(resourceAccResources.getTotalEnergyWeight()))
+                                                                    .longValue();
+
+        var totalBandwidth = BigInteger.valueOf(totalStakenBandwidthTRX).multiply(BigInteger.valueOf(43200000000L))
+                                                                        .divide(BigInteger.valueOf(TRX_DECIMALS))
+                                                                        .divide(BigInteger.valueOf(resourceAccResources.getTotalNetWeight()))
+                                                                        .longValue();
+        var totalEnergy = BigInteger.valueOf(totalStakenEnergyTRX).multiply(BigInteger.valueOf(90000000000L))
+                                                                  .divide(BigInteger.valueOf(TRX_DECIMALS))
+                                                                  .divide(BigInteger.valueOf(resourceAccResources.getTotalEnergyWeight()))
+                                                                  .longValue();
 
         log.info("totalStakenEnergyTRX = {}", totalStakenEnergyTRX * 1.0 / TRX_DECIMALS);
         log.info("totalStakenBandwidthTRX = {}", totalStakenBandwidthTRX * 1.0 / TRX_DECIMALS);
@@ -108,10 +127,10 @@ public class ResourceProviderService {
         log.info("availableBandwidthTRX = {}", availableBandwidthTRX * 1.0 / TRX_DECIMALS);
 
         return TronAccountResources.builder()
-                                   .totalStakedEnergy(totalStakenEnergyTRX)
-                                   .totalStakedBandwidth(totalStakenBandwidthTRX)
-                                   .availableEnergy(availableEnergyTRX)
-                                   .availableBandwidth(availableBandwidthTRX);
+                                   .totalStakedEnergy(totalEnergy)
+                                   .totalStakedBandwidth(totalBandwidth)
+                                   .availableEnergy(availableEnergy)
+                                   .availableBandwidth(availableBandwidth);
     }
 
 }

@@ -8,7 +8,8 @@ import java.sql.Timestamp;
 import java.util.List;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public record OrderDto(String walletAddress,
+public record OrderDto(String id,
+                       String walletAddress,
                        OrderStatus status,
                        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") Timestamp fulfillFrom,
                        List<TransactionDto> transactions) {
