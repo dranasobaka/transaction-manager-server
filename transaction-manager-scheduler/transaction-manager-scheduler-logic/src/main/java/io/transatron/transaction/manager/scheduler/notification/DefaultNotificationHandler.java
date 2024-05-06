@@ -1,6 +1,6 @@
 package io.transatron.transaction.manager.scheduler.notification;
 
-import io.transatron.transaction.manager.scheduler.configuration.CamelConfiguration;
+import io.transatron.transaction.manager.scheduler.configuration.properties.SedaConfigurationProperties;
 import io.transatron.transaction.manager.scheduler.domain.Subscription;
 import io.transatron.transaction.manager.scheduler.domain.SubscriptionId;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +23,10 @@ public class DefaultNotificationHandler implements NotificationHandler {
 
     private final ProducerTemplate producerTemplate;
 
+    private final SedaConfigurationProperties fulfillOrderSedaProperties;
+
+    private final SedaConfigurationProperties createTronEnergyOrderSedaProperties;
+
     @Override
     public List<Subscription> handle(List<Subscription> triggeredSubscriptions, long notifySubscribersTriggerMillis) {
         var notifications = createNotifications(triggeredSubscriptions, notifySubscribersTriggerMillis);
@@ -42,11 +46,11 @@ public class DefaultNotificationHandler implements NotificationHandler {
     private Notification<Object> handleSendNotification(Notification<Object> notification) {
         return switch (notification.getEventType()) {
             case FULFILL_ORDER -> {
-                producerTemplate.sendBody(CamelConfiguration.SEDA_FULFILL_ORDER_ROUTE_ID, notification);
+                producerTemplate.sendBody(fulfillOrderSedaProperties.getUri(), notification);
                 yield notification;
             }
             case CREATE_TRON_ENERGY_ORDER -> {
-                producerTemplate.sendBody(CamelConfiguration.SEDA_CREATE_TRON_ENERGY_ORDER_ROUTE_ID, notification);
+                producerTemplate.sendBody(createTronEnergyOrderSedaProperties.getUri(), notification);
                 yield notification;
             }
             default -> null;

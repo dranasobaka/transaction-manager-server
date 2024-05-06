@@ -23,8 +23,8 @@ public class CamelConfiguration {
     public static final String CREATE_TRON_ENERGY_ORDER_SEDA_NAME = "create_tron_energy_order_seda";
     public static final String FULFILL_ORDER_SEDA_NAME = "fulfill_order_seda";
 
-    public static final String SEDA_CREATE_TRON_ENERGY_ORDER_ROUTE_ID = "SedaCreateTronEnergyOrder";
-    public static final String SEDA_FULFILL_ORDER_ROUTE_ID = "SedaFulfillOrderSeda";
+    public static final String SEDA_CREATE_TRON_ENERGY_ORDER_ROUTE_ID = "SedaCreateTronEnergyOrderRouteId";
+    public static final String SEDA_FULFILL_ORDER_ROUTE_ID = "SedaFulfillOrderRouteId";
 
     @Bean
     @ConfigurationProperties("transaction-manager.create-tron-energy-order.seda")

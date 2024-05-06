@@ -1,5 +1,6 @@
 package io.transatron.transaction.manager.scheduler.configuration;
 
+import io.transatron.transaction.manager.scheduler.configuration.properties.SedaConfigurationProperties;
 import io.transatron.transaction.manager.scheduler.notification.DefaultNotificationHandler;
 import io.transatron.transaction.manager.scheduler.notification.NotificationHandler;
 import io.transatron.transaction.manager.schudeler.persistence.PostgresPersistenceFacade;
@@ -28,8 +29,10 @@ public class NotificationServiceConfiguration {
     }
 
     @Bean
-    public NotificationHandler notificationHandler(ProducerTemplate producerTemplate) {
-        return new DefaultNotificationHandler(producerTemplate);
+    public NotificationHandler notificationHandler(ProducerTemplate producerTemplate,
+                                                   SedaConfigurationProperties createTronEnergyOrderSedaProperties,
+                                                   SedaConfigurationProperties fulfillOrderSedaProperties) {
+        return new DefaultNotificationHandler(producerTemplate, fulfillOrderSedaProperties, createTronEnergyOrderSedaProperties);
     }
 
     @Bean
