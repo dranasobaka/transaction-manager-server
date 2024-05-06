@@ -1,14 +1,7 @@
 package io.transatron.transaction.manager.entity;
 
 import io.transatron.transaction.manager.domain.OrderStatus;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
-import jakarta.persistence.Temporal;
+import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.UuidGenerator;
 
@@ -58,6 +51,7 @@ public class OrderEntity {
     private Timestamp createdAt;
 
     @OneToMany(fetch = FetchType.EAGER)
+    @JoinColumn(name = "order_id", insertable = false, updatable = false)
     private List<TransactionEntity> transactions;
 
 }
