@@ -58,7 +58,7 @@ public class OrderResourcesEstimator {
         var availableAccountEnergy = availableAccountsWithResources.energyProviders().stream()
                 .collect(Collectors.toMap(TronAccountResources::address, TronAccountResources::availableEnergy));
 
-        var fulfilmentFrom = Timestamp.from(fulfillmentTime.toInstant().minus(Duration.ofHours(24)));
+        var fulfilmentFrom = Timestamp.from(clock.instant());
         var preOrders = orderRepository.findOrdersFulfillingWithinTimeRange(fulfilmentFrom, fulfillmentTime);
 
         for (var orderEntity : preOrders) {
