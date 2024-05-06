@@ -184,24 +184,6 @@
                 </exclusions>
             </dependency>
 
-            <dependency>
-                <groupId>org.springdoc</groupId>
-                <artifactId>springdoc-openapi-ui</artifactId>
-                <version>${springdoc-openapi-ui.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.springdoc</groupId>
-                <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-                <version>${springdoc-openapi-starter-webmvc-ui.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.springframework.cloud</groupId>
-                <artifactId>spring-cloud-starter-hystrix</artifactId>
-                <version>${spring-cloud.hystrix.version}</version>
-            </dependency>
-
             <!-- region of mapstruct -->
             <dependency>
                 <groupId>org.mapstruct</groupId>
@@ -229,6 +211,11 @@
             <dependency>
                 <groupId>org.tron.trident</groupId>
                 <artifactId>core</artifactId>
+                <version>${tron.trident.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.tron.trident</groupId>
+                <artifactId>abi</artifactId>
                 <version>${tron.trident.version}</version>
             </dependency>
 
@@ -441,9 +428,6 @@
                     </executions>
                     <configuration>
                         <executable>true</executable>
-                        <additionalProperties>
-                            <service-name>${service.name}</service-name>
-                        </additionalProperties>
                     </configuration>
                 </plugin>
                 <plugin>
@@ -536,23 +520,6 @@
                 <artifactId>build-helper-maven-plugin</artifactId>
                 <version>${build-helper-maven-plugin.version}</version>
                 <executions>
-                    <!--                    <execution>-->
-                    <!--                        <id>attach-openapi-schema-artifacts</id>-->
-                    <!--                        <phase>package</phase>-->
-                    <!--                        <goals>-->
-                    <!--                            <goal>attach-artifact</goal>-->
-                    <!--                        </goals>-->
-                    <!--                        <configuration>-->
-                    <!--                            <skipAttach>${openapi.schema.attach.skip}</skipAttach>-->
-                    <!--                            <artifacts>-->
-                    <!--                                <artifact>-->
-                    <!--                                    <file>${openapi.schema.file}</file>-->
-                    <!--                                    <classifier>openapi</classifier>-->
-                    <!--                                    <type>yml</type>-->
-                    <!--                                </artifact>-->
-                    <!--                            </artifacts>-->
-                    <!--                        </configuration>-->
-                    <!--                    </execution>-->
                     <execution>
                         <id>attach-artifacts</id>
                         <phase>package</phase>

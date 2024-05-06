@@ -13,7 +13,7 @@ import java.time.Clock;
 @Configuration
 public class SchedulerServicePostgresConfiguration {
 
-    @Value("${scheduler.service.persistence.postgres.remove-handled.intervalMillis:10000}")
+    @Value("${transaction-manager.scheduler.persistence.postgres.remove-handled.intervalMillis:10000}")
     private long removeHandledInterval;
 
     @Bean

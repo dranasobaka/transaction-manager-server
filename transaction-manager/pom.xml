@@ -27,7 +27,7 @@
             <artifactId>transaction-manager-scheduler-logic</artifactId>
         </dependency>
 
-        <!-- Spring Framework -->
+        <!-- region of spring-framework -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
@@ -38,16 +38,15 @@
                 </exclusion>
             </exclusions>
         </dependency>
-
-        <!-- OpenAPI -->
         <dependency>
-            <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-ui</artifactId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-log4j2</artifactId>
         </dependency>
+        <!-- endregion of spring-framework -->
 
         <!-- TESTS -->
         <dependency>

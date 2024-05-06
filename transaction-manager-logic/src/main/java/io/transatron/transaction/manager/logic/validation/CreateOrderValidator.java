@@ -40,7 +40,7 @@ public class CreateOrderValidator {
         assertFromAddress(userTxs, paymentTx);
         assertFulfillingTime(fulfillFrom);
         assertNoActiveOrdersCreated(paymentTx.from());
-        // TODO: verify amount in payment transaction = expected payment amount
+        // TODO: verify amount in payment transaction = expected payment amount ?
     }
 
     private void assertFromAddress(List<Transaction> userTxs, Transaction paymentTx) {
@@ -49,7 +49,7 @@ public class CreateOrderValidator {
                                    .distinct()
                                    .toList();
 
-        if (fromAddresses.size() > 1 || fromAddresses.get(0).equals(paymentTx.from())) {
+        if (fromAddresses.size() > 1 || !fromAddresses.get(0).equals(paymentTx.from())) {
             throw new BadRequestException("All transactions must have single sender address", VALIDATION_FAILED);
         }
     }

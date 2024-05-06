@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Configuration;
 public class PartitionGeneratorConfiguration {
 
     @Bean
-    @ConfigurationProperties(prefix = "scheduler.service")
+    @ConfigurationProperties(prefix = "transaction-manager.scheduler")
     public PartitionProperties partitionProperties() {
         return new PartitionProperties();
     }

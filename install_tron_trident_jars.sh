@@ -15,3 +15,11 @@ mvn install:install-file \
   -Dversion=0.7.0 \
   -Dpackaging=jar \
   -DgeneratePom=true
+
+mvn install:install-file \
+  -Dfile=org/tron/trident/abi/0.7.0/abi-0.7.0.jar \
+  -DgroupId=org.tron.trident \
+  -DartifactId=abi \
+  -Dversion=0.7.0 \
+  -Dpackaging=jar \
+  -DgeneratePom=true

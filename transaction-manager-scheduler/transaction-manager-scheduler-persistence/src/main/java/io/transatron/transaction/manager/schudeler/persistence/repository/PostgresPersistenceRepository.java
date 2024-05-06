@@ -1,8 +1,6 @@
 package io.transatron.transaction.manager.schudeler.persistence.repository;
 
 import io.transatron.transaction.manager.schudeler.persistence.converter.SubscriptionRowMapper;
-import io.transatron.transaction.manager.scheduler.domain.EventTypeMetadata;
-import io.transatron.transaction.manager.scheduler.domain.PartitionMetadata;
 import io.transatron.transaction.manager.scheduler.domain.Subscription;
 import io.transatron.transaction.manager.scheduler.domain.SubscriptionId;
 import io.transatron.transaction.manager.scheduler.domain.exception.SubscriptionTypeMismatchException;
@@ -18,7 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static java.util.Collections.emptyMap;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
@@ -48,8 +45,6 @@ public class PostgresPersistenceRepository {
 
     private final SubscriptionRowMapper subscriptionRowMapper;
     private final RowMapperResultSetExtractor<Subscription> subscriptionRowMapperResultSetExtractor;
-    private final RowMapperResultSetExtractor<EventTypeMetadata> eventTypeMetadataRowMapperResultSetExtractor;
-    private final RowMapperResultSetExtractor<PartitionMetadata> partitionMetadataRowMapperResultSetExtractor;
     private final NamedParameterJdbcOperations jdbc;
 
     public Optional<Subscription> findById(SubscriptionId id) {
@@ -129,46 +124,6 @@ public class PostgresPersistenceRepository {
                           subscriptionRowMapperResultSetExtractor);
     }
 
-    public List<EventTypeMetadata> countEarliestAndLatestByEventType() {
-        return jdbc.query("""
-                          SELECT event_type, COUNT(1), MIN(trigger_ts_millis), MAX(trigger_ts_millis) 
-                          FROM subscriptions
-                          WHERE handled = false
-                          GROUP BY event_type
-                          """,
-                          eventTypeMetadataRowMapperResultSetExtractor);
-    }
-
-    public List<PartitionMetadata> countByPartition() {
-       return jdbc.query("""
-                         SELECT s_partition, COUNT(1) 
-                         FROM subscriptions
-                         WHERE handled = false
-                         GROUP BY s_partition
-                         """,
-                         partitionMetadataRowMapperResultSetExtractor);
-    }
-
-    public Long countDelayedMessages(long delayedTriggerTsInMillis) {
-        return jdbc.queryForObject("""
-                                   SELECT COUNT(service_name)
-                                   FROM subscriptions
-                                   WHERE handled = false
-                                     AND trigger_ts_millis <= :trigger_ts_millis_before 
-                                   """,
-                                   getDelayedTriggerTsInMillisParamMap(delayedTriggerTsInMillis),
-                                   Long.class);
-    }
-
-    public Long countAllSubscriptions() {
-        return jdbc.queryForObject("""
-                                   SELECT COUNT(service_name)
-                                   FROM subscriptions
-                                   """,
-                                   emptyMap(),
-                                   Long.class);
-    }
-
     public void save(Subscription subscription, int nextPartition) {
         var subscriptionId = subscription.getSubscriptionId();
         var before = findSubscriptionByIdAndType(subscriptionId.getId(), subscriptionId.getEventType());
@@ -237,7 +192,4 @@ public class PostgresPersistenceRepository {
                       "trigger_ts_millis_before", millis);
     }
 
-    private Map<String, ? extends Number> getDelayedTriggerTsInMillisParamMap(long delayedTriggerTsInMillis) {
-        return Map.of("trigger_ts_millis_before", delayedTriggerTsInMillis);
-    }
 }

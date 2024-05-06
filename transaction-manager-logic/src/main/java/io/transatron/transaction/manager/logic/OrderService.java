@@ -12,7 +12,7 @@ import io.transatron.transaction.manager.entity.TransactionEntity;
 import io.transatron.transaction.manager.logic.api.TransaTronFeignClient;
 import io.transatron.transaction.manager.logic.estimator.OrderResourcesEstimator;
 import io.transatron.transaction.manager.logic.mapper.OrderMapper;
-import io.transatron.transaction.manager.logic.model.OrderEstimation;
+import io.transatron.transaction.manager.logic.model.OrderUsdtEstimation;
 import io.transatron.transaction.manager.logic.validation.CreateOrderValidator;
 import io.transatron.transaction.manager.repository.OrderRepository;
 import io.transatron.transaction.manager.scheduler.SubscriptionService;
@@ -21,11 +21,11 @@ import io.transatron.transaction.manager.scheduler.domain.SubscriptionId;
 import io.transatron.transaction.manager.scheduler.domain.SubscriptionType;
 import io.transatron.transaction.manager.scheduler.domain.payload.CreateTronEnergyOrderPayload;
 import io.transatron.transaction.manager.scheduler.domain.payload.HandleOrderPayload;
+import io.transatron.transaction.manager.web3.TRXDexManager;
 import io.transatron.transaction.manager.web3.TronHexDecoder;
 import io.transatron.transaction.manager.web3.utils.TronAddressUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.bouncycastle.util.encoders.Hex;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
@@ -38,6 +38,7 @@ import static io.transatron.transaction.manager.domain.exception.ErrorsTable.PAY
 import static io.transatron.transaction.manager.domain.exception.ErrorsTable.RESOURCE_NOT_FOUND;
 import static io.transatron.transaction.manager.scheduler.domain.EventTypes.CREATE_TRON_ENERGY_ORDER;
 import static io.transatron.transaction.manager.scheduler.domain.EventTypes.FULFILL_ORDER;
+import static io.transatron.transaction.manager.web3.TronConstants.TRX_DECIMALS;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -46,7 +47,7 @@ public class OrderService {
 
     private static final double OWN_ENERGY_PRICE_RATE_SUN = 50;
     private static final double OWN_BANDWIDTH_PRICE_RATE_SUN = 50;
-    private static final double EXTERNAL_ENERGY_PRICE_RATE = 70;
+    private static final double EXTERNAL_ENERGY_PRICE_RATE_SUN = 70;
 
     private final OrderRepository repository;
 
@@ -62,6 +63,8 @@ public class OrderService {
 
     private final SubscriptionService subscriptionService;
 
+    private final TRXDexManager trxDexManager;
+
     public Optional<Order> findLastOrder(String walletAddress) {
         var address = TronAddressUtils.toHex(walletAddress);
 
@@ -75,7 +78,7 @@ public class OrderService {
                          .orElseThrow(() -> new ResourceNotFoundException("Unable to find requested resource", RESOURCE_NOT_FOUND));
     }
 
-    public OrderEstimation estimateOrder(List<String> userTransactions, Timestamp fulfillFrom) {
+    public OrderUsdtEstimation estimateOrder(List<String> userTransactions, Timestamp fulfillFrom) {
         var decodedUserTxs = userTransactions.stream()
                                              .map(txDecoder::decodeTransaction)
                                              .toList();
@@ -94,10 +97,16 @@ public class OrderService {
         var availableOwnEnergy = resourcesEstimator.estimateEnergy(fulfillFrom);
         var externalEnergy = (accumulatedEnergy - availableOwnEnergy) > 0 ? accumulatedEnergy - availableOwnEnergy : 0;
 
-        var regularPrice = EXTERNAL_ENERGY_PRICE_RATE * externalEnergy;
+        var regularPrice = EXTERNAL_ENERGY_PRICE_RATE_SUN * externalEnergy;
         var transatronPrice = (OWN_ENERGY_PRICE_RATE_SUN * availableOwnEnergy) + (OWN_BANDWIDTH_PRICE_RATE_SUN * accumulatedBandwidth);
 
-        return new OrderEstimation(availableOwnEnergy, externalEnergy, accumulatedBandwidth, regularPrice, transatronPrice);
+        var regularPriceTrx = regularPrice / TRX_DECIMALS;
+        var transatronPriceTrx = transatronPrice / TRX_DECIMALS;
+
+        var regularPriceUsdt = trxDexManager.getTokenToTrxOutputPrice(Double.valueOf(regularPriceTrx).longValue());
+        var transatronPriceUsdt = trxDexManager.getTokenToTrxOutputPrice(Double.valueOf(transatronPriceTrx).longValue());
+
+        return new OrderUsdtEstimation(availableOwnEnergy, externalEnergy, accumulatedBandwidth, regularPriceUsdt, transatronPriceUsdt);
     }
 
     public void createOrder(List<String> userTransactions, String paymentTransaction, Timestamp fulfillFrom) {
@@ -124,7 +133,7 @@ public class OrderService {
         createOrder(decodedUserTxs, fulfillFrom, orderEstimation);
     }
 
-    private void createOrder(List<Transaction> userTransactions, Timestamp fulfillFrom, OrderEstimation orderEstimation) {
+    private void createOrder(List<Transaction> userTransactions, Timestamp fulfillFrom, OrderUsdtEstimation orderEstimation) {
         var fulfillTo = Timestamp.from(fulfillFrom.toInstant().plus(Duration.ofHours(1)));
         var fromAddress = userTransactions.get(0).from();
 
@@ -157,7 +166,7 @@ public class OrderService {
     }
 
     private void createTronEnergySubscription(String targetWalletAddress, Long energy, Timestamp fulfillFrom) {
-        // create order 15 minutes before actual order
+        // create Tron Energy order 15 minutes before actual order
         var triggerTs = fulfillFrom.toInstant().minus(Duration.ofMinutes(15));
         var payload = new CreateTronEnergyOrderPayload(targetWalletAddress, energy);
 

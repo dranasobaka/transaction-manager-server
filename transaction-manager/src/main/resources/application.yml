@@ -1,34 +1,11 @@
-eureka:
-  client:
-    healthcheck:
-      enabled: true
-
-management:
-  info:
-    env:
-      enabled: true
-  endpoint:
-    health:
-      show-details: always
-  endpoints:
-    web:
-      base-path: /
-      exposure:
-        include: '*'
-  server:
-    port: 8081
 server:
   port: 8080
   servlet:
     context-path: /
+
 spring:
-  datasource:
-    driver-class-name: org.postgresql.Driver
-  liquibase:
-    change-log: classpath:liquibase/db/changelog/changelog-current.xml
-  zipkin:
-    sender:
-      type: kafka
+  application:
+    name: transaction-manager
 
 info:
   swagger: http://${spring.cloud.client.ip-address:localhost}:${server.port:8080}${server.servlet.context-path:/}swagger-ui.html

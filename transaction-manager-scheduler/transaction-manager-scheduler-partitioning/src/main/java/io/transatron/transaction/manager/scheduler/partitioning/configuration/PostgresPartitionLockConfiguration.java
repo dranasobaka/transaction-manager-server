@@ -10,13 +10,10 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 @Configuration
 public class PostgresPartitionLockConfiguration {
 
-    @Value("${spring.cloud.client.hostname}")
-    private String schedulerHostname;
-
     @Bean
     public PostgresPartitionLock postgresPartitionLock(JdbcPartitionLockRepository jdbcPartitionLockRepository,
-                                                       @Value("${scheduler.service.partition.lock.ttlMillis:60000}") long lockTtlMillis) {
-        return new PostgresPartitionLock(jdbcPartitionLockRepository, schedulerHostname, lockTtlMillis);
+                                                       @Value("${transaction-manager.scheduler.partition.lock.ttlMillis:60000}") long lockTtlMillis) {
+        return new PostgresPartitionLock(jdbcPartitionLockRepository, lockTtlMillis);
     }
 
     @Bean

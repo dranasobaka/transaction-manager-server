@@ -80,8 +80,6 @@ public class CamelConfiguration {
     private SedaConfigurationProperties sedaConfiguration(String name) {
         var sedaConfiguration = new SedaConfigurationProperties();
         sedaConfiguration.setName(name);
-        sedaConfiguration.setPoolSize(20);
-        sedaConfiguration.setQueueSize(100);
         return sedaConfiguration;
     }
 

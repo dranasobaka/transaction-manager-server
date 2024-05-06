@@ -129,7 +129,7 @@ public class FulfillTransactionsProcessor implements Processor {
             var receiverAddress = TronAddressUtils.toBase58(orderEntity.getWalletAddress());
             var permissionId = managerAddressToPermissionID.get(bandwidthProvider.managerAddress());
             var privateKey = walletsProperties.getPrivateKeys().get(bandwidthProvider.managerAddress());
-            tronTransactionHandler.delegateEnergy(bandwidthProvider.address(), receiverAddress, bandwidthToDelegate, permissionId, privateKey);
+            tronTransactionHandler.delegateBandwidth(bandwidthProvider.address(), receiverAddress, bandwidthToDelegate, permissionId, privateKey);
 
             if (usedResources.containsKey(bandwidthProvider.address())) {
                 var delegatedResources = usedResources.get(bandwidthProvider.address())

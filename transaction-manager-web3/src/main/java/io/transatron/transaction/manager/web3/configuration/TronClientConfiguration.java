@@ -1,6 +1,6 @@
 package io.transatron.transaction.manager.web3.configuration;
 
-import io.transatron.transaction.manager.web3.configuration.properties.TronGrpcEndpointProperties;
+import io.transatron.transaction.manager.web3.configuration.properties.TronProperties;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,11 +13,11 @@ import static org.apache.commons.lang3.ObjectUtils.isNotEmpty;
 public class TronClientConfiguration {
 
     @Bean
-    public ApiWrapper apiWrapper(TronGrpcEndpointProperties properties) {
+    public ApiWrapper apiWrapper(TronProperties properties) {
         return createApiWrapper(properties);
     }
 
-    private ApiWrapper createApiWrapper(TronGrpcEndpointProperties properties) {
+    private ApiWrapper createApiWrapper(TronProperties properties) {
         var grpcEndpoint = properties.grpc();
         var grpcEndpointSolidity = properties.grpcSolidity();
         var privateKey = properties.privateKey();

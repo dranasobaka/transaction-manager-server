@@ -13,7 +13,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 public class SchedulerServiceConfiguration {
 
     @Bean
-    @ConfigurationProperties("scheduler.service")
+    @ConfigurationProperties("transaction-manager.scheduler")
     public SchedulerProperties schedulerServiceProperties() {
         return new SchedulerProperties();
     }

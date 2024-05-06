@@ -9,7 +9,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.List;
 import java.util.Map;
 
 import static java.util.Objects.isNull;
@@ -31,16 +30,15 @@ public class JdbcPartitionLockRepository {
         WHERE s_partition = :partition 
           AND locked_by_hostname = :hostname
         """;
-    private static final String GET_LOCKS_QUERY = "SELECT * FROM locks ORDER BY s_partition";
     private static final String GET_LOCK_BY_PARTITION_QUERY = "SELECT * FROM locks WHERE s_partition = :partition";
 
     private final NamedParameterJdbcOperations jdbc;
 
-    public boolean upsert(int partition, String hostName, Instant lockUntil, Instant now) {
+    public boolean upsert(int partition, Instant lockUntil, Instant now) {
         try {
             var before = getLockForPartition(partition);
             var params = Map.of("partition", partition,
-                                "hostname", hostName,
+                                "hostname", "localhost",
                                 "lockuntil", Timestamp.from(lockUntil),
                                 "now", Timestamp.from(now));
             var rows = jdbc.update(INSERT_LOCK_QUERY_TEMPLATE, params);
@@ -56,15 +54,11 @@ public class JdbcPartitionLockRepository {
         }
     }
 
-    public boolean deleteByPartitionAndHostname(Integer partition, String hostName) {
+    public boolean deleteByPartitionAndHostname(Integer partition) {
         var params = Map.of("partition", partition,
-                            "hostname", hostName);
+                            "hostname", "localhost");
         var rows = jdbc.update(DELETE_LOCK_QUERY_TEMPLATE, params);
         return rows != 0;
-    }
-
-    public List<PartitionLockEntity> getLocks() {
-        return jdbc.query(GET_LOCKS_QUERY, Map.of(), this::getPartitionLockEntity);
     }
 
     private PartitionLockEntity getLockForPartition(int partition) {

@@ -40,7 +40,7 @@ public class OrderController {
     public EstimateOrderResponse estimateOrder(CreateOrderRequest request) {
         var orderEstimation = service.estimateOrder(request.userTransactions(), request.fulfillFrom());
 
-        return new EstimateOrderResponse(orderEstimation.regularPrice(), orderEstimation.transatronPrice());
+        return new EstimateOrderResponse(orderEstimation.regularPriceUsdt(), orderEstimation.transatronPriceUsdt());
     }
 
     @GetMapping
