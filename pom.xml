@@ -325,6 +325,7 @@
                     <include>**/bootstrap*.yml</include>
                     <include>**/bootstrap*.yaml</include>
                     <include>**/bootstrap*.properties</include>
+                    <include>**/logging/*.xml</include>
                 </includes>
             </resource>
         </resources>

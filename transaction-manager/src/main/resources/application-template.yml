@@ -1,0 +1,67 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+spring:
+  jackson:
+    default-property-inclusion: non_null
+  datasource:
+    url: ${POSTGRES_JDBC_URL}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+  cloud:
+    openfeign:
+      client:
+        config:
+          transatron:
+            read-timeout: 10000
+            connect-timeout: 10000
+            default-request-headers:
+              TRANSATRON-API-KEY: ${TRANSATRON_API_KEY}
+
+transatron:
+  url: ${TRANSATRON_URL}
+
+payment-info:
+  deposit-address: ${PAYMENT_DEPOSIT_ADDRESS}
+wallets:
+  private-keys:
+    <address58>: <private-key>
+
+transaction-manager:
+  constraints:
+    order-min-delay: 5m
+    order-max-delay: 47h
+  scheduler:
+    partitions-count: 4
+    wait-for-jobs-to-complete-on-shutdown: true
+    await-termination-seconds: 10
+  create-tron-energy-order:
+    seda:
+      pool-size: 20
+      queue-size: 100
+      poll-timeout: 1000
+      block-when-full: true
+  fulfill-order:
+    seda:
+      pool-size: 20
+      queue-size: 100
+      poll-timeout: 1000
+      block-when-full: true
+
+tron:
+  grpc: grpc.trongrid.io:50051
+  grpc-solidity: grpc.trongrid.io:50052
+  private-key: ${TRONGRID_PRIVATE_KEY}
+  api-key: ${TRONGRID_API_KEY}
+  request-delay-millis: 1000
+  http-api:
+    url: https://api.trongrid.io
+tron-energy:
+  url: https://api.tronenergy.market
+  market-wallet-address: ${TRON_ENERGY_MARKET_WALLET}
+  api-key: ${TRON_ENERGY_API_KEY}
+
+logging:
+  config: classpath:logging/log4j2.xml

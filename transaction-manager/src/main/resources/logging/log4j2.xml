@@ -3,8 +3,7 @@
 
     <Properties>
         <Property name="CONSOLE_LOG_PATTERN">
-            %style{%d{ISO8601}}{black} %highlight{%-5level }[%style{%t}{bright,blue}] %style{%C{1.}}{bright,yellow}:
-            %msg%n%throwable
+            %style{%d{ISO8601}} %highlight{%-5level }[%style{%t}{bright,blue}] %style{%C{1.}}{bright,yellow}: %msg%n%throwable
         </Property>
         <Property name="FILE_LOG_PATTERN">
             %d %p %C{1.} [%t] %m%n
