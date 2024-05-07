@@ -18,8 +18,7 @@ import static jakarta.persistence.TemporalType.TIMESTAMP;
 public class OrderEntity {
 
     @Id
-    @Column
-    @UuidGenerator
+    @Column(name = "id")
     private UUID id;
 
     @Column(name = "wallet_address", columnDefinition = "BYTEA")

@@ -24,7 +24,9 @@ import org.apache.camel.Exchange;
 import org.apache.camel.Processor;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static io.transatron.transaction.manager.web3.utils.TronRequestUtils.delayIfRequested;
@@ -49,13 +51,14 @@ public class FulfillTransactionsProcessor implements Processor {
 
     @Override
     public void process(Exchange exchange) throws Exception {
-        var notification = exchange.getIn(Notification.class);
-        var payload = (HandleOrderPayload) notification.getPayload();
+        var notification = exchange.getIn().getBody(Notification.class);
+        var payload = (LinkedHashMap) notification.getPayload();
+        var orderId = (String) payload.get("orderId");
 
-        var optionalOrderEntity = orderRepository.findById(payload.orderId());
+        var optionalOrderEntity = orderRepository.findById(UUID.fromString(orderId));
 
         if (optionalOrderEntity.isEmpty()) {
-            log.error("Unable to find order with ID = {}", payload.orderId());
+            log.error("Unable to find order with ID = {}", orderId);
             return;
         }
         var orderEntity = optionalOrderEntity.get();
