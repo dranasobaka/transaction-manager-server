@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static io.transatron.transaction.manager.web3.TronConstants.TRX_DECIMALS;
 import static io.transatron.transaction.manager.web3.utils.TronRequestUtils.delayIfRequested;
 
 @Slf4j
@@ -117,11 +118,12 @@ public class FulfillTransactionsProcessor implements Processor {
                 continue;
             }
             var energyToDelegate = availableEnergy >= energyLeftToDelegate ? energyLeftToDelegate : availableEnergy;
+            var energyToDelegateTRX = energyToDelegate * TRX_DECIMALS;
 
             var receiverAddress = TronAddressUtils.toBase58(orderEntity.getWalletAddress());
             var permissionId = managerAddressToPermissionID.get(energyProvider.managerAddress());
             var privateKey = walletsProperties.getPrivateKeys().get(energyProvider.managerAddress());
-            tronTransactionHandler.delegateEnergy(energyProvider.address(), receiverAddress, energyToDelegate, permissionId, privateKey);
+            tronTransactionHandler.delegateEnergy(energyProvider.address(), receiverAddress, energyToDelegateTRX, permissionId, privateKey);
 
             usedResources.put(energyProvider.address(),
                               new DelegatedResources(energyProvider.address(), energyProvider.managerAddress(), energyToDelegate, 0L));
@@ -138,11 +140,12 @@ public class FulfillTransactionsProcessor implements Processor {
 
             var availableBandwidth = bandwidthProvider.availableBandwidth();
             var bandwidthToDelegate = availableBandwidth >= bandwidthLeftToDelegate ? bandwidthLeftToDelegate : availableBandwidth;
+            var bandwidthToDelegateTRX = bandwidthToDelegate * TRX_DECIMALS;
 
             var receiverAddress = TronAddressUtils.toBase58(orderEntity.getWalletAddress());
             var permissionId = managerAddressToPermissionID.get(bandwidthProvider.managerAddress());
             var privateKey = walletsProperties.getPrivateKeys().get(bandwidthProvider.managerAddress());
-            tronTransactionHandler.delegateBandwidth(bandwidthProvider.address(), receiverAddress, bandwidthToDelegate, permissionId, privateKey);
+            tronTransactionHandler.delegateBandwidth(bandwidthProvider.address(), receiverAddress, bandwidthToDelegateTRX, permissionId, privateKey);
 
             if (usedResources.containsKey(bandwidthProvider.address())) {
                 var delegatedResources = usedResources.get(bandwidthProvider.address())
