@@ -8,6 +8,15 @@ In order to build this service you have to have an installed:
 * [JDK 17](https://docs.aws.amazon.com/corretto/latest/corretto-17-ug/downloads-list.html) (you can a JDK from another provider as well)
 * [Docker](https://www.docker.com/products/docker-desktop/) (for testing purposes)
 
+### Installing Tron Trident libraries in local maven repository
+
+We are using Tron Trident libraries for communicating with TRON node via gRPC. 
+You can install them by executing following command:
+
+```shell
+sh ./install_tron_trident_jars.sh
+```
+
 ### Building
 
 In order to build this service with testing you should execute following command:
