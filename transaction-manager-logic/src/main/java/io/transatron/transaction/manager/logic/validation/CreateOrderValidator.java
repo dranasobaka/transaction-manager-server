@@ -3,6 +3,7 @@ package io.transatron.transaction.manager.logic.validation;
 import io.transatron.transaction.manager.domain.OrderStatus;
 import io.transatron.transaction.manager.domain.Transaction;
 import io.transatron.transaction.manager.domain.exception.BadRequestException;
+import io.transatron.transaction.manager.logic.configuration.properties.ConstraintsProperties;
 import io.transatron.transaction.manager.repository.OrderRepository;
 import io.transatron.transaction.manager.web3.utils.TronAddressUtils;
 import lombok.RequiredArgsConstructor;
@@ -22,12 +23,13 @@ import static org.apache.commons.lang3.ObjectUtils.isNotEmpty;
 @RequiredArgsConstructor
 public class CreateOrderValidator {
 
-    private static final int MILLIS_IN_HOUR = 3600 * 1000;
     private static final Set<OrderStatus> ACTIVE_ORDER_STATUSES = Set.of(IN_PROGRESS, SCHEDULED);
 
     private final Clock clock;
 
     private final OrderRepository repository;
+
+    private final ConstraintsProperties properties;
 
     public void validate(List<Transaction> userTxs, Transaction paymentTx, Timestamp fulfillFrom) {
         assertFromAddress(userTxs, paymentTx);
@@ -48,8 +50,8 @@ public class CreateOrderValidator {
     }
 
     private void assertFulfillingTime(Timestamp fulfillFrom) {
-        var minFulfillFromTime = clock.instant().toEpochMilli() + MILLIS_IN_HOUR;
-        var maxFulfillFromTime = clock.instant().toEpochMilli() + (MILLIS_IN_HOUR * 47);
+        var minFulfillFromTime = clock.instant().toEpochMilli() + properties.getOrderMinDelay().toMillis();
+        var maxFulfillFromTime = clock.instant().toEpochMilli() + properties.getOrderMaxDelay().toMillis();
 
         if (fulfillFrom.getTime() < minFulfillFromTime) {
             throw new BadRequestException("Earliest available fulfilling time is 1 hour from now", VALIDATION_FAILED);

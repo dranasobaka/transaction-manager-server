@@ -14,7 +14,9 @@ import static org.mapstruct.MappingConstants.ComponentModel.SPRING;
 public interface OrderMapper {
 
     @Mappings({
-        @Mapping(target = "walletAddress", expression = "java(io.transatron.transaction.manager.web3.utils.TronAddressUtils.toBase58(entity.getWalletAddress()))")
+        @Mapping(target = "walletAddress", expression = "java(io.transatron.transaction.manager.web3.utils.TronAddressUtils.toBase58(entity.getWalletAddress()))"),
+        @Mapping(source = "ownBandwidth", target = "bandwidth"),
+        @Mapping(target = "energy", expression = "java(entity.getOwnEnergy() + entity.getExternalEnergy())")
     })
     Order toModel(OrderEntity entity);
 

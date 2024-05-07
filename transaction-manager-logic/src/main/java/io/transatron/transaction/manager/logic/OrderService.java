@@ -29,7 +29,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.Clock;
 import java.time.Duration;
@@ -146,6 +145,7 @@ public class OrderService {
         orderEntity.setExternalEnergy(orderEstimation.externalEnergy());
         orderEntity.setOwnBandwidth(orderEstimation.ownBandwidth());
         orderEntity.setCreatedAt(Timestamp.from(clock.instant()));
+        orderEntity.setCostUsdt(orderEstimation.priceUsdt());
 
         var transactionEntities = userTransactions.stream()
                 .map(tx -> newTransaction(tx, orderEntity))

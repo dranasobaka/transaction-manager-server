@@ -13,12 +13,12 @@ import java.util.UUID;
 
 public interface OrderRepository extends JpaRepository<OrderEntity, UUID> {
 
-    @Query("SELECT o FROM OrderEntity o WHERE o.walletAddress = ?1 ORDER BY o.createdAt LIMIT 1")
+    @Query("SELECT o FROM OrderEntity o WHERE o.walletAddress = ?1 ORDER BY o.createdAt DESC LIMIT 1")
     Optional<OrderEntity> findLastByWalletAddress(byte[] walletAddress);
 
     List<OrderEntity> findAllByWalletAddress(byte[] walletAddress);
 
-    @Query("SELECT o FROM OrderEntity o WHERE o.fulfillFrom BETWEEN ?1 AND ?2 ORDER BY o.fulfillFrom LIMIT 1")
+    @Query("SELECT o FROM OrderEntity o WHERE o.fulfillFrom BETWEEN ?1 AND ?2 ORDER BY o.fulfillFrom DESC LIMIT 1")
     List<OrderEntity> findOrdersFulfillingWithinTimeRange(Timestamp from, Timestamp to);
 
     List<OrderEntity> findAllByWalletAddressAndStatusIn(byte[] walletAddress, Set<OrderStatus> statuses);

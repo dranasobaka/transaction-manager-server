@@ -3,7 +3,6 @@ package io.transatron.transaction.manager.entity;
 import io.transatron.transaction.manager.domain.OrderStatus;
 import jakarta.persistence.*;
 import lombok.Data;
-import org.hibernate.annotations.UuidGenerator;
 
 import java.sql.Timestamp;
 import java.util.List;
@@ -40,6 +39,9 @@ public class OrderEntity {
 
     @Column(name = "own_bandwidth")
     private Long ownBandwidth;
+
+    @Column(name = "cost_usdt")
+    private Long costUsdt;
 
     @Enumerated(STRING)
     @Column(name = "status", nullable = false)

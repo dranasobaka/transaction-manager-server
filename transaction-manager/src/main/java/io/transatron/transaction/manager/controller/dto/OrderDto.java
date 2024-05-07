@@ -12,5 +12,8 @@ public record OrderDto(String id,
                        String walletAddress,
                        OrderStatus status,
                        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") Timestamp fulfillFrom,
-                       List<TransactionDto> transactions) {
+                       List<TransactionDto> transactions,
+                       Long costUsdt,
+                       Long energy,
+                       Long bandwidth) {
 }

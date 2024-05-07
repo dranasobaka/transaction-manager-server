@@ -72,7 +72,10 @@ public class OrderController {
                                   .walletAddress(dto.walletAddress())
                                   .status(order.status())
                                   .fulfillFrom(dto.fulfillFrom())
-                                  .transactions(dto.transactions());
+                                  .transactions(dto.transactions())
+                                  .costUsdt(dto.costUsdt())
+                                  .energy(dto.energy())
+                                  .bandwidth(dto.bandwidth());
                });
 
         return responseBuilder.build();

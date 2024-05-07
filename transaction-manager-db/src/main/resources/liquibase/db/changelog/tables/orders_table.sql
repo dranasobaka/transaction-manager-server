@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS orders
     own_energy      BIGINT,
     external_energy BIGINT,
     own_bandwidth   BIGINT,
+    cost_usdt       BIGINT,
     created_at      TIMESTAMP   NOT NULL DEFAULT now(),
     CONSTRAINT orders_pkey
         PRIMARY KEY (id)
