@@ -195,9 +195,15 @@ public class FulfillTransactionsProcessor implements Processor {
         var request = new BroadcastHexRequest(txEntity.getRawTransaction());
         try {
             var result = delayIfRequested(() -> tronHttpApiClient.broadcastHex(request), tronProperties.requestDelayMillis());
-            log.info("Broadcasted transaction result: {}", result);
-            txEntity.setStatus(TransactionStatus.SUCCESSFUL);
-            return true;
+            if (result.contains("\"SUCCESS\"")) {
+                log.info("Broadcasted transaction result: {}", result);
+                txEntity.setStatus(TransactionStatus.SUCCESSFUL);
+                return true;
+            } else {
+                log.info("Failed to broadcast transaction. Result: {}", result);
+                txEntity.setStatus(TransactionStatus.FAILED);
+                return false;
+            }
         } catch (Exception ex) {
             txEntity.setStatus(TransactionStatus.FAILED);
             return false;

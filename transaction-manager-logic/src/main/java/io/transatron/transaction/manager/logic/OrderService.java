@@ -52,6 +52,8 @@ public class OrderService {
     private static final double OWN_BANDWIDTH_PRICE_RATE_SUN = 500;
     private static final double EXTERNAL_ENERGY_PRICE_RATE_SUN = 85;
 
+    private static final double OWN_BANDWIDTH_MULTIPLIER = 1.01;    // 1% more to make sure bandwidth is enough to successfully broadcast transaction
+
     private final OrderRepository repository;
 
     private final OrderMapper mapper;
@@ -90,14 +92,16 @@ public class OrderService {
         var externalEnergy = (energy - sharedOwnEnergy) > 0 ? energy - sharedOwnEnergy : 0;
 
         var marketPrice = EXTERNAL_ENERGY_PRICE_RATE_SUN * externalEnergy;
-        var transatronPrice = (OWN_ENERGY_PRICE_RATE_SUN * sharedOwnEnergy) + (OWN_BANDWIDTH_PRICE_RATE_SUN * bandwidth);
+        var transatronPrice = (OWN_ENERGY_PRICE_RATE_SUN * sharedOwnEnergy) + (OWN_BANDWIDTH_PRICE_RATE_SUN * OWN_BANDWIDTH_MULTIPLIER * bandwidth);
 
         var marketPriceUsdt = externalEnergy > 0 ? trxDexManager.getTokenToTrxOutputPrice(Double.valueOf(marketPrice).longValue()) : 0;
         var transatronPriceUsdt = trxDexManager.getTokenToTrxOutputPrice(Double.valueOf(transatronPrice).longValue());
 
         var priceUsdt = marketPriceUsdt + transatronPriceUsdt;
 
-        return new OrderEstimation(sharedOwnEnergy, externalEnergy, bandwidth, priceUsdt);
+        var bandwidthWithExtra = (long) OWN_BANDWIDTH_MULTIPLIER * bandwidth;
+
+        return new OrderEstimation(sharedOwnEnergy, externalEnergy, bandwidthWithExtra, priceUsdt);
     }
 
     public UUID createOrder(List<String> userTransactions,
