@@ -8,6 +8,7 @@ import io.transatron.transaction.manager.web3.utils.TronAddressUtils;
 import io.transatron.transaction.manager.web3.utils.TronUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.stereotype.Component;
 import org.tron.trident.core.ApiWrapper;
 import org.tron.trident.proto.Common;
@@ -135,6 +136,18 @@ public class ResourceProviderService {
                                    .totalStakedBandwidth(totalBandwidth)
                                    .availableEnergy(availableEnergy)
                                    .availableBandwidth(availableBandwidth);
+    }
+
+    public Long castToEnergyTrx(String address, Long energy) {
+        var resourceAccResources = delayIfRequested(() -> apiWrapper.getAccountResource(address), properties.requestDelayMillis());
+
+        return energy * resourceAccResources.getTotalEnergyWeight() / 90000000000L * TRX_DECIMALS;
+    }
+
+    public Long castToBandwidthTrx(String address, Long bandwidth) {
+        var resourceAccResources = delayIfRequested(() -> apiWrapper.getAccountResource(address), properties.requestDelayMillis());
+
+        return bandwidth * resourceAccResources.getTotalNetWeight() / 43200000000L * TRX_DECIMALS;
     }
 
 }

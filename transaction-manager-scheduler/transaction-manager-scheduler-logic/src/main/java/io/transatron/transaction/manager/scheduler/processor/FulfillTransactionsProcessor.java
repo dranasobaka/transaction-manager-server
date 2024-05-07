@@ -118,7 +118,7 @@ public class FulfillTransactionsProcessor implements Processor {
                 continue;
             }
             var energyToDelegate = availableEnergy >= energyLeftToDelegate ? energyLeftToDelegate : availableEnergy;
-            var energyToDelegateTRX = energyToDelegate * TRX_DECIMALS;
+            var energyToDelegateTRX = resourceProviderService.castToEnergyTrx(energyProvider.address(), energyToDelegate);
 
             var receiverAddress = TronAddressUtils.toBase58(orderEntity.getWalletAddress());
             var permissionId = managerAddressToPermissionID.get(energyProvider.managerAddress());
@@ -140,7 +140,7 @@ public class FulfillTransactionsProcessor implements Processor {
 
             var availableBandwidth = bandwidthProvider.availableBandwidth();
             var bandwidthToDelegate = availableBandwidth >= bandwidthLeftToDelegate ? bandwidthLeftToDelegate : availableBandwidth;
-            var bandwidthToDelegateTRX = bandwidthToDelegate * TRX_DECIMALS;
+            var bandwidthToDelegateTRX = resourceProviderService.castToBandwidthTrx(bandwidthProvider.address(), bandwidthToDelegate);
 
             var receiverAddress = TronAddressUtils.toBase58(orderEntity.getWalletAddress());
             var permissionId = managerAddressToPermissionID.get(bandwidthProvider.managerAddress());
@@ -179,10 +179,12 @@ public class FulfillTransactionsProcessor implements Processor {
             var privateKey = walletsProperties.getPrivateKeys().get(provider.managerAddress());
 
             if (provider.delegatedEnergy() > 0) {
-                tronTransactionHandler.undelegateEnergy(provider.address(), userAddress, provider.delegatedEnergy(), permissionId, privateKey);
+                var energyToReclaimTrx = resourceProviderService.castToEnergyTrx(provider.address(), provider.delegatedEnergy());
+                tronTransactionHandler.undelegateEnergy(provider.address(), userAddress, energyToReclaimTrx, permissionId, privateKey);
             }
             if (provider.delegatedBandwidth() > 0) {
-                tronTransactionHandler.undelegateBandwidth(provider.address(), userAddress, provider.delegatedBandwidth(), permissionId, privateKey);
+                var bandwidthToReclaimTrx = resourceProviderService.castToBandwidthTrx(provider.address(), provider.delegatedBandwidth());
+                tronTransactionHandler.undelegateBandwidth(provider.address(), userAddress, bandwidthToReclaimTrx, permissionId, privateKey);
             }
         });
 
